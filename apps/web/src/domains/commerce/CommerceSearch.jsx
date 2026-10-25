@@ -6,7 +6,7 @@ import { Section } from '../../shared/ui/Section.jsx';
 
 /** Cuántas opciones se muestran por grupo cuando hay texto escrito. */
 const LIMITE_CON_BUSQUEDA = 8;
-/** Colonias y alcaldías de entrada: una muestra útil, no el catálogo entero. */
+/** Muestra de entrada para listas largas (colonias). */
 const LIMITE_SIN_BUSQUEDA = 6;
 
 const GRUPOS = [
@@ -56,7 +56,10 @@ export function CommerceSearch({
   const inputRef = useRef(null);
 
   const query = normalizeText(filters.q);
-  const tokens = query.split(/\s+/).filter(Boolean);
+  const tokens = useMemo(
+    () => query.split(/\s+/).filter(Boolean),
+    [query]
+  );
 
   const groups = useMemo(
     () => buildGroups(options, filters, tokens),
@@ -68,17 +71,20 @@ export function CommerceSearch({
   );
 
   const chips = useMemo(() => buildChips(filters), [filters]);
-  const hasFilters =
-    chips.length > 0 ||
-    Boolean(filters.q) ||
-    Boolean(filters.vialidad) ||
-    Boolean(filters.direccion) ||
-    Boolean(filters.colonia) ||
-    Boolean(filters.alcaldia);
+  const hasFilters = chips.length > 0 || Boolean(filters.q);
 
   // Cambiar el texto reinicia el resaltado: Enter sólo elige una opción si el
   // usuario la recorrió con las flechas o la tocó.
   useEffect(() => setActiveIndex(-1), [filters.q]);
+
+  // Las flechas recorren la lista; hay que mantener visible la opción activa
+  // dentro del panel con scroll.
+  useEffect(() => {
+    if (!open || activeIndex < 0) return;
+    document
+      .getElementById(`search-option-${activeIndex}`)
+      ?.scrollIntoView({ block: 'nearest' });
+  }, [activeIndex, open]);
 
   // Cerrar al tocar fuera del buscador. Los botones de opción mantienen el
   // foco en el input, así que el blur no sirve como señal.
@@ -231,6 +237,12 @@ export function CommerceSearch({
             </button>
           )}
         </div>
+
+        {options.total === 0 && (
+          <p className="search-result-empty">
+            Ningún tianguis combina estos filtros. Quita uno o cambia el día.
+          </p>
+        )}
 
         {open && (
           <div

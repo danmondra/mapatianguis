@@ -40,6 +40,7 @@ npm run verify:data
 | `npm run verify:data` | Valida conteos, campos y geometrías |
 | `npm run migrate:data` | Extrae datos/CSS/fuentes del HTML legado |
 | `npm run migrate:data -- ../ruta/mapa.html` | Migra desde otro HTML |
+| `npm run import:photos` | Convierte `../fotos` a WebP y genera el manifiesto de fotos |
 | `npm run build:mercomuna` | Genera `data/commerce/mercomuna.json` desde el cruce de Incertianguis |
 | `npm run build:mercomuna -- --source=<ruta.csv>` | Usa otro CSV de entrada |
 | `npm run seed:feedback` | Regenera `data/feedback/events.json` con 60 eventos sintéticos |
@@ -163,6 +164,28 @@ y chácharas, 107 abarrotes y canasta básica, 26 ropa y calzado, 20 comida
 preparada, 3 oficios y servicios.
 
 El runtime ya **no ejecuta Python**. La extracción desde el HTML legado es un paso de migración, no una dependencia de producción.
+
+## Fotos de los tianguis
+
+La carpeta `../fotos` del repositorio de trabajo guarda una carpeta por tianguis.
+El número de carpeta es el **índice 0-based** del tianguis en el directorio:
+
+```text
+fotos/0002/featured.jpg    -> tianguis[2]  (foto principal de Google Maps)
+fotos/0002/streetview.jpg  -> tianguis[2]  (vista de calle)
+```
+
+`npm run import:photos` (requiere ImageMagick) genera dos WebP por imagen —una
+miniatura de 360 px para el hover y una versión de 900 px para la ficha— en
+`apps/web/public/tianguis/fotos/`, y escribe `data/commerce/photos.json`. La API
+adjunta ese manifiesto como `idx` y `fotos` a cada tianguis del directorio. Si
+una imagen no existe, el tianguis conserva su ficha y el marcador no muestra
+tooltip de foto.
+
+En el mapa, pasar el cursor sobre un puesto abre una tarjeta con su foto; al
+hacer click se abre la vista previa con la galería, las miniaturas `Foto` y
+`Calle`, y la foto en grande. Los archivos generados no se editan a mano: se
+regeneran con el comando anterior (`-- --force` rehace todo).
 
 ## Estado
 

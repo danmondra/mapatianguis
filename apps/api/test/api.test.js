@@ -30,6 +30,17 @@ describe('datos migrados', () => {
     assert.ok(wednesday.every((tianguis) => /MIÉRCOLES|MIERCOLES/i.test(tianguis.dia)));
   });
 
+  it('adjunta el índice y las fotos importadas a cada tianguis', async () => {
+    const { tianguis } = await getDirectory();
+    const conFoto = tianguis.find((item) => item.fotos?.principal);
+
+    assert.ok(conFoto, 'el manifiesto debe tener al menos una foto principal');
+    assert.equal(conFoto.idx, tianguis.indexOf(conFoto));
+    assert.match(conFoto.fotos.principal.thumb, /^\/tianguis\/fotos\/\d{4}\//);
+    assert.match(conFoto.fotos.principal.full, /^\/tianguis\/fotos\/\d{4}\//);
+    assert.ok(tianguis.filter((item) => item.fotos).length >= 400);
+  });
+
   it('filtra por giro usando el catálogo, no el texto libre', async () => {
     const { tianguis } = await getDirectory();
     const bazar = filterTianguis(tianguis, { giro: 'CAT_BAZAR_CHACHARAS' });
