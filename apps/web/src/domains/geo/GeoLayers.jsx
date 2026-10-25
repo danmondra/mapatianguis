@@ -24,7 +24,7 @@ const ALCALDIA_HOVER_STYLE = Object.freeze({
  * @param {{ data: import('@mapatianguis/contracts/geo').GeoLayers }} props
  */
 export function GeoLayers({ data }) {
-  const { map, registerLayer, unregisterLayer } = useMapContext();
+  const { map, registerLayer, unregisterLayer, setLayerVisible } = useMapContext();
 
   useEffect(() => {
     if (!data) return undefined;
@@ -63,6 +63,10 @@ export function GeoLayers({ data }) {
             layer.setStyle(ALCALDIA_STYLE);
           },
           click: () => {
+            // Al seleccionar una alcaldía se encienden las estaciones de
+            // referencia, igual que en la previsualización de un tianguis.
+            setLayerVisible('metro_icons', true);
+            setLayerVisible('metrobus_icons', true);
             // flyToBounds calcula el zoom según el tamaño del polígono.
             map?.flyToBounds(layer.getBounds(), {
               padding: [24, 24],
@@ -81,7 +85,7 @@ export function GeoLayers({ data }) {
       unregisterLayer('alcaldias', alcaldias);
       if (map?.hasLayer(renderer)) map.removeLayer(renderer);
     };
-  }, [data, map, registerLayer, unregisterLayer]);
+  }, [data, map, registerLayer, unregisterLayer, setLayerVisible]);
 
   return null;
 }

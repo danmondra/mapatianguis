@@ -18,20 +18,16 @@ import {
 const MapContext = createContext(null);
 
 /**
- * Panes propios del mapa. Fijan el orden de apilado aunque una capa se apague,
- * se vuelva a encender o haga `bringToFront`: los polígonos base nunca quedan
- * encima de los tianguis y no se roban sus clicks.
+ * Panes propios del mapa. Fijan el orden de apilado aunque una capa se apague
+ * y se vuelva a encender: los polígonos base nunca quedan encima de los
+ * marcadores interactivos.
  */
 export const MAP_PANES = Object.freeze({
-  geo: 'geoShapes',
-  mercomuna: 'mercomunaShapes',
-  commerce: 'commerceShapes'
+  geo: 'geoShapes'
 });
 
 const MAP_PANE_Z_INDEX = Object.freeze({
-  [MAP_PANES.geo]: 410,
-  [MAP_PANES.mercomuna]: 440,
-  [MAP_PANES.commerce]: 450
+  [MAP_PANES.geo]: 410
 });
 
 const BASE_LAYERS = {

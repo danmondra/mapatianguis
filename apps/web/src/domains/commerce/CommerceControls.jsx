@@ -1,29 +1,46 @@
 import { getTodayName, WEEK_DAYS } from '@mapatianguis/contracts';
-import { Chip } from '../../shared/ui/Chip.jsx';
+import { TODAS_LAS_CATEGORIAS } from '@mapatianguis/contracts/giros';
 import { Section } from '../../shared/ui/Section.jsx';
-import { useMapContext } from '../../map/MapProvider.jsx';
 
 /**
- * Chips de capas y calendario semanal para filtrar tianguis por día.
+ * Calendario semanal y filtro por giro.
+ * El día y el giro se combinan: un puesto se dibuja si pasa los dos filtros.
  * @param {{
- *   counts: { tianguis: number, msr: number, mercomuna?: number | null },
  *   dayCounts: Record<string, number>,
+ *   giroCounts: Map<string, number>,
  *   totalCount: number,
  *   selectedDay: string | null,
  *   onDayChange: (day: string | null) => void,
- *   mercomunaHint?: string
+ *   selectedGiros: string[],
+ *   onToggleGiro: (giroId: string) => void,
+ *   onClearGiros: () => void
  * }} props
  */
 export function CommerceControls({
-  counts,
   dayCounts,
+  giroCounts,
   totalCount,
   selectedDay,
   onDayChange,
-  mercomunaHint
+  selectedGiros,
+  onToggleGiro,
+  onClearGiros
 }) {
-  const { visibleLayers, toggleLayer } = useMapContext();
   const today = getTodayName();
+
+  // Sólo se ofrecen los giros con puestos en el mapa con los filtros
+  // actuales (día, búsqueda y vialidad incluidos).
+  const visibleGiros = TODAS_LAS_CATEGORIAS.filter((categoria) =>
+    giroCounts.has(categoria.id)
+  );
+  const visibleGiroCount = visibleGiros.reduce(
+    (total, categoria) => total + (giroCounts.get(categoria.id) ?? 0),
+    0
+  );
+  // Varios giros elegidos a la vez: no hay categoría que se pueda llamar
+  // "todos", así que el botón queda sin marcar.
+  const isEveryGiroSelected =
+    selectedGiros.length > 0 && selectedGiros.length === visibleGiros.length;
 
   return (
     <Section title="Comercio Popular">
@@ -66,39 +83,60 @@ export function CommerceControls({
         </div>
       </fieldset>
 
-      <div className="chips-flow">
-        <Chip
-          id="chip-tianguis"
-          active={visibleLayers.tianguis}
-          onClick={() => toggleLayer('tianguis')}
-        >
-          🧺 Tianguis ({counts.tianguis.toLocaleString('es-MX')})
-        </Chip>
-        <Chip
-          id="chip-msr"
-          active={visibleLayers.msr}
-          onClick={() => toggleLayer('msr')}
-        >
-          🚚 Rutas MSR ({counts.msr})
-        </Chip>
-        <Chip
-          id="chip-mercomuna"
-          active={visibleLayers.mercomuna}
-          onClick={() => toggleLayer('mercomuna')}
-        >
-          💳 Vales Mercomuna
-          {counts.mercomuna != null ? ` (${counts.mercomuna.toLocaleString('es-MX')})` : ''}
-        </Chip>
-      </div>
+      <fieldset className="giro-filter">
+        <legend className="giro-filter-legend">Color del puesto = giro</legend>
 
-      {visibleLayers.mercomuna && mercomunaHint && (
-        <p className="chip-hint">{mercomunaHint}</p>
-      )}
+        <p className="giro-filter-hint">Toca un giro para verlo solo en el mapa.</p>
 
-      <p className="chip-hint">
-        Los vales Mercomuna se pueden usar en estos comercios hasta el 31 de
-diciembre de 2026.
-      </p>
+        <div className="giro-filter-flow">
+          <button
+            type="button"
+            className={`giro-filter-all${isEveryGiroSelected ? ' active' : ''}`}
+            aria-pressed={isEveryGiroSelected}
+            title={`${visibleGiroCount} tianguis`}
+            onClick={onClearGiros}
+          >
+            <span className="giro-filter-swatch giro-filter-swatch--all" aria-hidden="true" />
+            <span className="giro-filter-name">Todos los giros</span>
+            <span className="giro-filter-count">
+              {visibleGiroCount.toLocaleString('es-MX')}
+            </span>
+          </button>
+
+          {visibleGiros.map((categoria) => {
+            const active = selectedGiros.includes(categoria.id);
+            const total = giroCounts.get(categoria.id) ?? 0;
+            return (
+              <button
+                key={categoria.id}
+                type="button"
+                className={`giro-filter-btn${active ? ' active' : ''}`}
+                aria-pressed={active}
+                title={`${categoria.nombre}: ${total} tianguis`}
+                style={{ '--giro-tono': categoria.tono }}
+                onClick={() => onToggleGiro(categoria.id)}
+              >
+                <span
+                  className="giro-filter-swatch"
+                  style={{ background: categoria.tono }}
+                  aria-hidden="true"
+                />
+                <span className="giro-filter-name">{categoria.nombre}</span>
+                <span className="giro-filter-count">
+                  {total.toLocaleString('es-MX')}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {giroCounts.has('SIN_GIRO') && (
+          <p className="chip-hint">
+            El 77% de los tianguis del directorio oficial no declara giro; van
+            en rojo.
+          </p>
+        )}
+      </fieldset>
     </Section>
   );
 }

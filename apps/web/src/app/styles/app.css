@@ -34,6 +34,58 @@
   font-family: var(--font-main);
 }
 
+/* Leaflet fuerza `max-width: none` a las imágenes de sus panes (y cambiaría
+   con el tema). El puesto declara su ancho con la especificidad suficiente
+   para que el PNG mida lo que dice el icono y no sus 128 px naturales. */
+.leaflet-container .tianguis-icon img.tianguis-icon-img {
+  max-width: none;
+  height: auto;
+}
+
+/* Marcador de tianguis: el puesto de `public/tianguis.png` sustituye al punto.
+   Sin caja ni fondo para que el PNG transparente se apoye en el mapa. */
+.tianguis-icon {
+  background: none;
+  border: 0;
+}
+
+/* El PNG se dibuja al tamaño exacto que pide el icono; nunca se estira. */
+.tianguis-icon .tianguis-icon-img {
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 1px 1px rgba(15, 23, 42, 0.3));
+  transition: transform 0.15s ease, filter 0.15s ease;
+  transform-origin: 50% 50%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* El tianguis bajo el cursor o seleccionado se levanta sin cambiar de tamaño. */
+.tianguis-icon:hover .tianguis-icon-img,
+.tianguis-icon:focus-visible .tianguis-icon-img {
+  transform: scale(1.25);
+  filter: drop-shadow(0 2px 3px rgba(15, 23, 42, 0.4));
+}
+
+.tianguis-icon:focus-visible {
+  outline: none;
+}
+
+.leaflet-marker-icon.tianguis-icon:focus-visible .tianguis-icon-img {
+  filter: drop-shadow(0 0 0 #fff) drop-shadow(0 0 4px rgba(15, 89, 83, 0.9));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tianguis-icon .tianguis-icon-img {
+    transition: none;
+  }
+
+  .tianguis-icon:hover .tianguis-icon-img,
+  .tianguis-icon:focus-visible .tianguis-icon-img {
+    transform: none;
+  }
+}
+
 /* El foco del polígono se marca sobre su forma, no con un rectángulo. */
 .leaflet-pane > svg path.leaflet-interactive:focus {
   outline: none;
@@ -142,7 +194,217 @@
   opacity: 0.9;
 }
 
-/* Aviso bajo los chips de capas (p. ej. precisión de Mercomuna). */
+/* Leyenda de vialidad y movilidad: solo lectura, sin estados de hover ni foco. */
+.legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend-item {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+}
+
+.legend-swatch-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+}
+
+.legend-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding-top: 1px;
+}
+
+.legend-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--cdmx-text-dark);
+  line-height: 1.2;
+}
+
+.legend-note {
+  font-size: 0.66rem;
+  line-height: 1.3;
+  color: #64748b;
+}
+
+/* Muestras: reproducen el trazo real de cada capa del mapa. */
+.legend-swatch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.legend-swatch-metro {
+  background: #f97316;
+}
+
+.legend-swatch-metrobus {
+  background: #e11d48;
+  font-size: 7px;
+}
+
+.legend-line {
+  width: 20px;
+  height: 0;
+  border-top: 2px dashed #0f5953;
+}
+
+.legend-line-alcaldia {
+  border-top-style: dashed;
+  border-top-color: #2f7a72;
+  opacity: 0.9;
+}
+
+.legend-fill {
+  width: 18px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid #94a3b8;
+  background: #f1f5f9;
+}
+
+.legend-fill-zmvm {
+  opacity: 0.9;
+}
+
+
+/* Filtro por giro: el color del puesto es la única pista de categoría en el
+   mapa, así que cada giro se ofrece como botón y también explica la paleta.
+   Comparte el ritmo vertical del calendario de días para que el panel se lea
+   como un solo bloque de filtros. */
+.giro-filter {
+  min-width: 0;
+  margin: 10px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.giro-filter-legend {
+  margin: 0 0 4px;
+  padding: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.giro-filter-hint {
+  margin: 0 0 6px;
+  font-size: 0.66rem;
+  line-height: 1.3;
+  color: #64748b;
+}
+
+.giro-filter-flow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+/* Todos los botones del filtro comparten caja: misma altura, mismo radio y
+   mismo peso tipográfico, para que se lean como un solo grupo y no como
+   elementos sueltos. */
+.giro-filter-all,
+.giro-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 26px;
+  padding: 4px 7px;
+  border: 1px solid var(--cdmx-border);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--cdmx-text-dark);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.15;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.giro-filter-all {
+  grid-column: 1 / -1;
+  font-size: 0.72rem;
+}
+
+.giro-filter-all:hover,
+.giro-filter-btn:hover {
+  border-color: var(--giro-tono, var(--cdmx-green-dark));
+  background: var(--cdmx-green-light);
+}
+
+.giro-filter-all.active {
+  background: var(--cdmx-green-dark);
+  border-color: var(--cdmx-green-dark);
+  color: #ffffff;
+}
+
+/* El giro prendido se tiñe con su propio color de toldo: se ve en el panel
+   qué puesto se está mirando sin tener que buscarlo en el mapa. */
+.giro-filter-btn.active {
+  border-color: var(--giro-tono, var(--cdmx-green-dark));
+  background: var(--giro-tono, var(--cdmx-green-dark));
+  color: #ffffff;
+}
+
+/* Punto del color del puesto: identifica la categoría sin ensuciar el borde
+   ni desalinear el texto entre botones. */
+.giro-filter-swatch {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.18);
+}
+
+.giro-filter-swatch--all {
+  background: linear-gradient(135deg, #22b95e, #d95f1f 45%, #2f62d4 80%);
+}
+
+.giro-filter-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.giro-filter-count {
+  flex-shrink: 0;
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: var(--cdmx-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.giro-filter-btn.active .giro-filter-count,
+.giro-filter-all.active .giro-filter-count {
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* Aviso bajo los chips de capas. */
 .chip-hint {
   margin: 6px 0 0;
   font-size: 0.68rem;
@@ -154,6 +416,19 @@
 .chip-btn.is-pending {
   border-style: dashed;
   opacity: 0.62;
+}
+
+
+/* El giro declarado se pinta con el color de su puesto en el mapa. */
+.tianguis-preview-chip--giro {
+  color: #ffffff;
+}
+
+.tianguis-preview-giro-raw {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 0.66rem;
+  line-height: 1.35;
 }
 
 /* Panel derecho de previsualización de tianguis. */
@@ -432,4 +707,587 @@
     max-width: none;
     max-height: 72vh;
   }
+}
+
+/* -------------------------------------------------------------------------
+   Fotos del tianguis
+   La carpeta `fotos/0002` se importa como WebP y la API adjunta sus URLs a
+   cada tianguis. El hover del marcador usa la miniatura; la ficha usa la
+   imagen completa y permite abrirla en grande.
+   ---------------------------------------------------------------------- */
+
+/* Tooltip de hover sobre el puesto. Leaflet lo dibuja en su propio pane,
+   así que se neutraliza la caja por defecto y se arma la tarjeta dentro. */
+.leaflet-tooltip.tianguis-foto-tooltip {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  white-space: normal;
+}
+
+.leaflet-tooltip-top.tianguis-foto-tooltip::before {
+  border-top-color: #ffffff;
+}
+
+.tianguis-foto-tooltip-card {
+  width: 228px;
+  overflow: hidden;
+  border: 1px solid var(--cdmx-border);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(9, 44, 41, 0.24);
+}
+
+.tianguis-foto-tooltip-img {
+  display: block;
+  width: 100%;
+  height: 128px;
+  object-fit: cover;
+}
+
+.tianguis-foto-tooltip-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 10px;
+}
+
+.tianguis-foto-tooltip-copy strong {
+  overflow: hidden;
+  color: var(--cdmx-green-dark);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tianguis-foto-tooltip-copy span {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 0.64rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tianguis-foto-tooltip-copy small {
+  margin-top: 3px;
+  color: var(--cdmx-green-primary);
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+/* Galería de la ficha. */
+.tianguis-preview-photos {
+  margin-bottom: 12px;
+}
+
+.tianguis-preview-photo-frame {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #dbe7e5;
+}
+
+.tianguis-preview-photo-open {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.tianguis-preview-photo-open img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.tianguis-preview-photo-open:hover img {
+  transform: scale(1.025);
+}
+
+.tianguis-preview-photo-open:focus-visible {
+  outline: 3px solid var(--cdmx-green-dark);
+  outline-offset: -3px;
+}
+
+.tianguis-preview-photo-kind,
+.tianguis-preview-photo-credit,
+.tianguis-preview-photo-expand {
+  position: absolute;
+  z-index: 1;
+  border-radius: 999px;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.tianguis-preview-photo-kind {
+  top: 8px;
+  left: 8px;
+  padding: 4px 7px;
+  background: rgba(9, 44, 41, 0.76);
+  color: #ffffff;
+}
+
+.tianguis-preview-photo-credit {
+  right: 8px;
+  bottom: 8px;
+  padding: 4px 7px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #334155;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.tianguis-preview-photo-expand {
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--cdmx-green-dark);
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+
+.tianguis-preview-photo-thumbs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.tianguis-preview-photo-thumb {
+  position: relative;
+  height: 52px;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 2px solid transparent;
+  border-radius: 9px;
+  background: #dbe7e5;
+  cursor: pointer;
+}
+
+.tianguis-preview-photo-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.78;
+  transition: opacity 0.15s ease, transform 0.2s ease;
+}
+
+.tianguis-preview-photo-thumb span {
+  position: absolute;
+  left: 6px;
+  bottom: 5px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  background: rgba(9, 44, 41, 0.76);
+  color: #ffffff;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.tianguis-preview-photo-thumb:hover img,
+.tianguis-preview-photo-thumb:focus-visible img,
+.tianguis-preview-photo-thumb.is-active img {
+  opacity: 1;
+  transform: scale(1.03);
+}
+
+.tianguis-preview-photo-thumb.is-active {
+  border-color: var(--cdmx-green-dark);
+}
+
+.tianguis-preview-photo-thumb:focus-visible {
+  outline: 2px solid var(--cdmx-green-dark);
+  outline-offset: 2px;
+}
+
+/* Foto en grande. Se monta en `document.body` para que el `overflow:hidden`
+   del panel no la recorte. */
+.tianguis-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(6, 24, 23, 0.84);
+  backdrop-filter: blur(5px);
+  animation: tianguis-lightbox-in 0.18s ease-out;
+}
+
+@keyframes tianguis-lightbox-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tianguis-lightbox-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: min(1100px, 92vw);
+  max-height: 88vh;
+  margin: 0;
+}
+
+.tianguis-lightbox-figure img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(88vh - 42px);
+  object-fit: contain;
+  border-radius: 12px;
+  background: #0b1f1e;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+}
+
+.tianguis-lightbox-figure figcaption {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  color: #e2e8f0;
+  font-size: 0.76rem;
+  line-height: 1.3;
+}
+
+.tianguis-lightbox-figure figcaption small {
+  color: #a7c4c0;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.tianguis-lightbox-close {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.tianguis-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+@media (max-width: 820px) {
+  .tianguis-preview-photo-frame {
+    aspect-ratio: 16 / 9;
+  }
+
+  .tianguis-lightbox {
+    padding: 12px;
+  }
+
+  .tianguis-lightbox-close {
+    top: 10px;
+    right: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tianguis-preview-photo-open img,
+  .tianguis-preview-photo-thumb img,
+  .tianguis-lightbox {
+    animation: none;
+    transition: none;
+  }
+
+  .tianguis-preview-photo-open:hover img,
+  .tianguis-preview-photo-thumb:hover img,
+  .tianguis-preview-photo-thumb:focus-visible img,
+  .tianguis-preview-photo-thumb.is-active img {
+    transform: none;
+  }
+}
+
+/* ── Buscador con opciones en lista ─────────────────────────────────────────
+   El texto libre filtra en vivo; la lista convierte la búsqueda en filtros
+   estructurados (dirección, día, giro, vialidad, colonia y alcaldía). */
+.search-toggle {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--cdmx-green-dark);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.search-toggle:hover {
+  text-decoration: underline;
+}
+
+.search-combobox .search-input-box input {
+  padding-right: 30px;
+}
+
+.search-input-clear {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  cursor: pointer;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.search-input-clear:hover {
+  background: #cbd5e1;
+  color: #0f172a;
+}
+
+.search-hint {
+  margin: 5px 0 0;
+  font-size: 0.66rem;
+  line-height: 1.35;
+  color: #64748b;
+}
+
+.search-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.search-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 3px 4px 3px 7px;
+  border: 1px solid #a7f3d0;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #065f46;
+  font-size: 0.64rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.search-chip-swatch {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.18);
+}
+
+.search-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-chip-remove {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #d1fae5;
+  color: #065f46;
+  cursor: pointer;
+  font-size: 0.56rem;
+  line-height: 1;
+}
+
+.search-chip-remove:hover {
+  background: #065f46;
+  color: #ffffff;
+}
+
+.search-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 7px;
+}
+
+.search-result-count {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--cdmx-text-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.search-clear {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #b91c1c;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.search-clear:hover {
+  text-decoration: underline;
+}
+
+/* La lista vive en el flujo del panel (no es un overlay): así el usuario ve
+   las opciones completas y puede seguir leyendo el resto de los filtros. */
+.search-options {
+  max-height: 330px;
+  margin-top: 7px;
+  overflow-y: auto;
+  border: 1px solid var(--cdmx-border);
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.search-group + .search-group {
+  border-top: 1px solid #e2e8f0;
+}
+
+.search-group-title {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 8px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  color: #475569;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.search-group-count {
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.search-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--cdmx-text-dark);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.7rem;
+  line-height: 1.25;
+  text-align: left;
+}
+
+/* El resaltado sigue el mouse y las flechas: una sola señal de selección. */
+.search-option.is-active {
+  background: #ecfdf5;
+}
+
+.search-option.is-selected {
+  font-weight: 800;
+  color: var(--cdmx-green-dark);
+}
+
+.search-option-swatch {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.18);
+}
+
+.search-option-icon {
+  margin-right: 3px;
+}
+
+.search-option-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-option-count {
+  flex-shrink: 0;
+  color: var(--cdmx-text-muted);
+  font-size: 0.62rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.search-option-check {
+  flex-shrink: 0;
+  width: 11px;
+  color: var(--cdmx-green-dark);
+  font-size: 0.66rem;
+  text-align: center;
+}
+
+.search-empty,
+.search-options-note {
+  margin: 0;
+  padding: 8px;
+  color: #64748b;
+  font-size: 0.64rem;
+  line-height: 1.4;
+}
+
+.search-options-note {
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
 }

@@ -1,4 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { categoriaPorId } from '@mapatianguis/contracts/giros';
 
 const GIROS = [
   'Frutas y verduras',
@@ -22,6 +24,11 @@ const CURIOSIDADES = [
   'Los domingos suele ser el día de mayor afluencia para este tipo de tianguis.'
 ];
 
+const PHOTO_LABELS = Object.freeze({
+  principal: { label: 'Foto del tianguis', short: 'Foto' },
+  calle: { label: 'Vista de calle', short: 'Calle' }
+});
+
 /**
  * Panel derecho de previsualización de un tianguis.
  *
@@ -37,17 +44,33 @@ const CURIOSIDADES = [
 export function TianguisPreview({ selection, nearbyStations = [], onClose }) {
   const tianguis = selection?.kind === 'tianguis' ? selection.data : null;
   const preview = useMemo(() => (tianguis ? buildPreview(tianguis) : null), [tianguis]);
+  const photos = useMemo(() => buildPhotoEntries(tianguis), [tianguis]);
+  const [activePhotoKind, setActivePhotoKind] = useState(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  const activePhoto =
+    photos.find((photo) => photo.kind === activePhotoKind) ?? photos[0] ?? null;
+
+  useEffect(() => {
+    setActivePhotoKind(null);
+    setLightboxOpen(false);
+  }, [tianguis]);
 
   useEffect(() => {
     if (!tianguis) return undefined;
 
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Escape') return;
+      if (lightboxOpen) {
+        setLightboxOpen(false);
+        return;
+      }
+      onClose();
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [tianguis, onClose]);
+  }, [tianguis, lightboxOpen, onClose]);
 
   if (!tianguis || !preview) return null;
 
@@ -74,6 +97,16 @@ export function TianguisPreview({ selection, nearbyStations = [], onClose }) {
       </div>
 
       <div className="tianguis-preview-scroll">
+        {activePhoto && (
+          <PhotoGallery
+            tianguis={tianguis}
+            photos={photos}
+            activePhoto={activePhoto}
+            onSelect={setActivePhotoKind}
+            onOpen={() => setLightboxOpen(true)}
+          />
+        )}
+
         <div className="tianguis-preview-hero">
           <div className="tianguis-preview-emoji" aria-hidden="true">
             🧺
@@ -107,7 +140,34 @@ export function TianguisPreview({ selection, nearbyStations = [], onClose }) {
         </section>
 
         <section className="tianguis-preview-block">
-          <h3>🛒 Giros principales (est.)</h3>
+          <h3>🛒 Giro declarado</h3>
+          {tianguis.categorias?.length > 0 ? (
+            <>
+              <div className="tianguis-preview-chips">
+                {tianguis.categorias.map((id) => {
+                  const categoria = categoriaPorId(id);
+                  return (
+                    <span
+                      key={id}
+                      className="tianguis-preview-chip tianguis-preview-chip--giro"
+                      style={{ background: categoria.tono }}
+                    >
+                      {categoria.icono} {categoria.nombre}
+                    </span>
+                  );
+                })}
+              </div>
+              <p className="tianguis-preview-giro-raw">
+                Directorio ADIP: <i>“{tianguis.giro}”</i>
+              </p>
+            </>
+          ) : (
+            <p className="tianguis-preview-empty">
+              El directorio oficial no declara giro para este tianguis: en el mapa va en
+              rojo, como 1,053 de los 1,367.
+            </p>
+          )}
+          <h3>🍎 Giros de ejemplo (est.)</h3>
           <div className="tianguis-preview-chips">
             {preview.giros.map((giro) => (
               <span key={giro} className="tianguis-preview-chip">
@@ -160,8 +220,132 @@ export function TianguisPreview({ selection, nearbyStations = [], onClose }) {
           previa.
         </p>
       </div>
+
+      {lightboxOpen &&
+        activePhoto &&
+        createPortal(
+          <div
+            className="tianguis-lightbox"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Fotos del tianguis de ${tianguis.colonia}`}
+            onClick={() => setLightboxOpen(false)}
+          >
+            <figure
+              className="tianguis-lightbox-figure"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <img
+                src={activePhoto.full}
+                alt={photoAlt(tianguis, activePhoto.kind)}
+                decoding="async"
+              />
+              <figcaption>
+                <span>
+                  {activePhoto.label} · {tianguis.colonia}
+                </span>
+                <small>{activePhoto.credit}</small>
+              </figcaption>
+            </figure>
+            <button
+              type="button"
+              className="tianguis-lightbox-close"
+              onClick={() => setLightboxOpen(false)}
+              title="Cerrar foto"
+              aria-label="Cerrar foto"
+            >
+              ✕
+            </button>
+          </div>,
+          document.body
+        )}
     </aside>
   );
+}
+
+/**
+ * Galería de la ficha: una imagen principal y miniaturas que cambian al pasar
+ * el cursor. La imagen se puede abrir en grande con click o teclado.
+ */
+function PhotoGallery({ tianguis, photos, activePhoto, onSelect, onOpen }) {
+  return (
+    <section className="tianguis-preview-photos" aria-label="Fotos del tianguis">
+      <div className="tianguis-preview-photo-frame">
+        <button
+          type="button"
+          className="tianguis-preview-photo-open"
+          onClick={onOpen}
+          aria-label={`Ver ${activePhoto.label.toLowerCase()} en grande`}
+        >
+          <img
+            key={activePhoto.full}
+            src={activePhoto.full}
+            alt={photoAlt(tianguis, activePhoto.kind)}
+            loading="eager"
+            decoding="async"
+          />
+        </button>
+        <span className="tianguis-preview-photo-kind">{activePhoto.short}</span>
+        <span className="tianguis-preview-photo-credit">{activePhoto.credit}</span>
+        <span className="tianguis-preview-photo-expand" aria-hidden="true">
+          ⤢
+        </span>
+      </div>
+
+      {photos.length > 1 && (
+        <div className="tianguis-preview-photo-thumbs">
+          {photos.map((photo) => (
+            <button
+              key={photo.kind}
+              type="button"
+              className={`tianguis-preview-photo-thumb${
+                photo.kind === activePhoto.kind ? ' is-active' : ''
+              }`}
+              onClick={() => onSelect(photo.kind)}
+              onMouseEnter={() => onSelect(photo.kind)}
+              onFocus={() => onSelect(photo.kind)}
+              aria-pressed={photo.kind === activePhoto.kind}
+              aria-label={`Ver ${photo.label.toLowerCase()}`}
+            >
+              <img
+                src={photo.thumb}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                aria-hidden="true"
+              />
+              <span>{photo.short}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function photoAlt(tianguis, kind) {
+  return kind === 'calle'
+    ? `Vista de calle cerca del tianguis en ${tianguis.colonia}, ${tianguis.alcaldia}`
+    : `Foto del tianguis en ${tianguis.colonia}, ${tianguis.alcaldia}`;
+}
+
+function buildPhotoEntries(tianguis) {
+  if (!tianguis?.fotos) return [];
+  return ['principal', 'calle']
+    .map((kind) => {
+      const photo = tianguis.fotos[kind];
+      if (!photo?.thumb || !photo?.full) return null;
+      const labels = PHOTO_LABELS[kind];
+      return {
+        kind,
+        label: labels.label,
+        short: labels.short,
+        credit: photo.credit ?? 'Google Maps',
+        thumb: photo.thumb,
+        full: photo.full
+      };
+    })
+    .filter(Boolean);
 }
 
 function PreviewStat({ label, value }) {

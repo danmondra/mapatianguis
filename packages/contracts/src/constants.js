@@ -14,9 +14,7 @@ export const API_ROUTES = Object.freeze({
   },
   commerce: {
     directory: `${API_PREFIX}/commerce/directory`,
-    msr: `${API_PREFIX}/commerce/msr`,
-    tianguis: `${API_PREFIX}/commerce/tianguis`,
-    mercomuna: `${API_PREFIX}/commerce/mercomuna`
+    tianguis: `${API_PREFIX}/commerce/tianguis`
   },
   feedback: {
     events: `${API_PREFIX}/feedback`,
@@ -60,33 +58,22 @@ export const LAYER_KEYS = Object.freeze([
   'alcaldias',
   'metro_icons',
   'metrobus_icons',
-  'tianguis',
-  'msr',
-  'mercomuna'
+  'tianguis'
 ]);
 
 /**
- * Visibilidad inicial. `mercomuna` arranca apagada: es una capa opcional y
- * pesada (8,798 comercios), se enciende desde su chip.
+ * Visibilidad inicial de las capas del mapa.
  */
 export const DEFAULT_LAYER_VISIBILITY = Object.freeze({
   zmvm: true,
   alcaldias: true,
   metro_icons: true,
   metrobus_icons: true,
-  tianguis: true,
-  msr: true,
-  mercomuna: false
+  tianguis: true
 });
 
 /** Zoom mínimo para dibujar las estaciones de transporte. */
 export const STATION_MIN_ZOOM = 14;
-
-/**
- * Zoom mínimo de la capa Mercomuna. Con 8,798 puntos no se dibujan de lejos:
- * se encienden al acercarse, ya con el chip activo.
- */
-export const MERCOMUNA_MIN_ZOOM = 13;
 
 /**
  * @param {string} value

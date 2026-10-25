@@ -1,15 +1,17 @@
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 import { createApp } from '../src/app.js';
-import { filterTianguis } from '@mapatianguis/contracts/commerce';
-import { normalizeText } from '@mapatianguis/contracts';
-import { getDirectory, getMercomuna } from '../src/domains/commerce/commerce.service.js';
+import {
+  buildSearchOptions,
+  filterTianguis,
+  vialidadDeTianguis
+} from '@mapatianguis/contracts/commerce';
+import { getDirectory } from '../src/domains/commerce/commerce.service.js';
 import { getMetroStations } from '../src/domains/mobility/mobility.service.js';
 
 describe('datos migrados', () => {
   it('conserva los conteos del visor legado', async () => {
-    const { msr, tianguis } = await getDirectory();
-    assert.equal(msr.length, 51);
+    const { tianguis } = await getDirectory();
     assert.equal(tianguis.length, 1_367);
     assert.equal((await getMetroStations()).length, 195);
   });
@@ -27,27 +29,69 @@ describe('datos migrados', () => {
     assert.ok(wednesday.length > 100);
     assert.ok(wednesday.every((tianguis) => /MIÉRCOLES|MIERCOLES/i.test(tianguis.dia)));
   });
-});
 
-describe('directorio Mercomuna', () => {
-  it('conserva los conteos del cruce de Incertianguis', async () => {
-    const { resumen } = await getMercomuna();
-    assert.equal(resumen.total, 8_798);
-    assert.equal(resumen.precisos, 2_029);
-    assert.equal(resumen.aproximados, 6_755);
-    assert.equal(resumen.sinUbicacion, 14);
-    assert.equal(resumen.porCp, 691);
+  it('filtra por giro usando el catálogo, no el texto libre', async () => {
+    const { tianguis } = await getDirectory();
+    const bazar = filterTianguis(tianguis, { giro: 'CAT_BAZAR_CHACHARAS' });
+    assert.ok(bazar.length > 0);
+    assert.ok(
+      bazar.every((tianguis) => tianguis.categorias?.[0] === 'CAT_BAZAR_CHACHARAS')
+    );
   });
 
-  it('nunca marca como precisa una coordenada de centroide de CP', async () => {
-    const { comercios } = await getMercomuna();
-    const aproximados = comercios.filter((comercio) => comercio.precision === 'cp');
-    assert.ok(aproximados.every((comercio) => comercio.imprecisa === true));
-    assert.ok(
-      comercios
-        .filter((comercio) => comercio.precision === 'exacta')
-        .every((comercio) => comercio.imprecisa === false)
+  it('deriva la vialidad del tramo principal de la ubicación', async () => {
+    const { tianguis } = await getDirectory();
+
+    // Abreviaturas y acentos: AV. / AVENIDA / CALLE. El tramo antes de
+    // "ENTRE" manda; las calles que cruzan no cambian la clasificación.
+    assert.equal(
+      vialidadDeTianguis({ ubicacion: 'AV. CHICAGO ENTRE URANO Y JÚPITER' }),
+      'AVENIDA'
     );
+    assert.equal(
+      vialidadDeTianguis({ ubicacion: 'CALZ. DE LAS ÁGUILAS ENT. AGAMENÓN E ILÍADA' }),
+      'CALZADA'
+    );
+    assert.equal(
+      vialidadDeTianguis({ ubicacion: 'CDA. CAPULÍN ENT. 14 DE FEBRERO Y AV. 29 DE OCT.' }),
+      'CERRADA'
+    );
+    assert.equal(
+      vialidadDeTianguis({ ubicacion: 'ADOLFO DE LA HUERTA ENTRE RUIZ CORTINEZ Y BENITO JUAREZ' }),
+      'CALLE'
+    );
+
+    const avenidas = filterTianguis(tianguis, { vialidad: 'AVENIDA' });
+    assert.ok(avenidas.length > 0);
+    assert.ok(avenidas.every((tianguis) => vialidadDeTianguis(tianguis) === 'AVENIDA'));
+  });
+
+  it('busca en vivo por calle, colonia, giro, día y vialidad', async () => {
+    const { tianguis } = await getDirectory();
+    const matches = filterTianguis(tianguis, { q: 'insurgentes' });
+    assert.ok(matches.length > 0);
+    assert.ok(
+      matches.every((tianguis) =>
+        `${tianguis.ubicacion} ${tianguis.colonia} ${tianguis.alcaldia}`
+          .toLowerCase()
+          .includes('insurgentes')
+      )
+    );
+  });
+
+  it('cuenta opciones sin aplicar la dimensión que se está eligiendo', async () => {
+    const { tianguis } = await getDirectory();
+    const options = buildSearchOptions(tianguis, { day: 'LUNES' });
+
+    assert.equal(options.total, filterTianguis(tianguis, { day: 'LUNES' }).length);
+    assert.equal(options.dayTotal, tianguis.length);
+    assert.equal(options.giroTotal, options.total);
+    assert.equal(options.vialidadTotal, options.total);
+
+    const lunes = options.days.find((day) => day.value === 'LUNES');
+    assert.equal(lunes.count, filterTianguis(tianguis, { day: 'LUNES' }).length);
+    assert.ok(options.direcciones.length > 0);
+    assert.ok(options.alcaldias.length > 0);
   });
 });
 
@@ -73,40 +117,35 @@ describe('API HTTP', () => {
     assert.equal(response.status, 200);
     const data = await response.json();
     assert.equal(data.mercados, undefined);
-    assert.equal(data.msr.length, 51);
+    assert.equal(data.msr, undefined);
     assert.equal(data.tianguis.length, 1_367);
   });
 
-  it('sirve el directorio de comercios con vales Mercomuna', async () => {
+  it('ya no expone el directorio Mercomuna', async () => {
     const response = await fetch(`${baseUrl}/commerce/mercomuna`);
-    assert.equal(response.status, 200);
-    const data = await response.json();
-    assert.equal(data.comercios.length, 8_798);
-    assert.equal(data.porCp.length, 691);
-    assert.equal(data.vigenteHasta, '2026-12-31');
-    assert.ok(data.comercios.every((comercio) => comercio.aceptaVales === true));
-  });
-
-  it('filtra Mercomuna por texto y por alimentos', async () => {
-    const response = await fetch(`${baseUrl}/commerce/mercomuna?alimentos=1&q=carniceria`);
-    assert.equal(response.status, 200);
-    const data = await response.json();
-    assert.ok(data.comercios.length > 0);
-    assert.ok(data.comercios.every((comercio) => comercio.alimentos));
-    // El buscador ignora acentos: "Carnicería" entra en "carniceria".
-    assert.ok(
-      data.comercios.every((comercio) =>
-        normalizeText(
-          `${comercio.nombre} ${comercio.categoria ?? ''} ${comercio.giro} ${comercio.calle}`
-        ).includes('carniceria')
-      )
-    );
-    assert.ok(data.porCp.length <= 691);
+    assert.equal(response.status, 404);
   });
 
   it('ya no expone el endpoint de mercados públicos', async () => {
     const response = await fetch(`${baseUrl}/commerce/mercados`);
     assert.equal(response.status, 404);
+  });
+
+  it('ya no expone el endpoint de MSR', async () => {
+    const response = await fetch(`${baseUrl}/commerce/msr`);
+    assert.equal(response.status, 404);
+  });
+
+  it('filtra por giro y vialidad desde la API', async () => {
+    const giro = await fetch(`${baseUrl}/commerce/tianguis?giro=CAT_BAZAR_CHACHARAS`);
+    assert.equal(giro.status, 200);
+    assert.ok((await giro.json()).length > 0);
+
+    const vialidad = await fetch(`${baseUrl}/commerce/tianguis?vialidad=AVENIDA`);
+    assert.equal(vialidad.status, 200);
+    const avenidas = await vialidad.json();
+    assert.ok(avenidas.length > 0);
+    assert.ok(avenidas.every((tianguis) => vialidadDeTianguis(tianguis) === 'AVENIDA'));
   });
 
   it('sirve estaciones sin trazos de movilidad', async () => {

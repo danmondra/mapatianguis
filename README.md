@@ -43,6 +43,7 @@ npm run verify:data
 | `npm run build:mercomuna` | Genera `data/commerce/mercomuna.json` desde el cruce de Incertianguis |
 | `npm run build:mercomuna -- --source=<ruta.csv>` | Usa otro CSV de entrada |
 | `npm run seed:feedback` | Regenera `data/feedback/events.json` con 60 eventos sintéticos |
+| `npm run build:giros` | Cruza `tianguis-cdmx.csv` con el directorio y añade `giro` / `categorias` a cada tianguis |
 
 ## Arquitectura
 
@@ -54,7 +55,7 @@ apps/
     src/shell/         sidebar, FABs, ficha de detalle, accesos rápidos
     src/domains/
       geo/             alcaldías y ZMVM
-      commerce/        MSR, tianguis, buscador y chips
+      commerce/        tianguis, buscador y chips
       mobility/        estaciones Metro/Metrobús como referencia
     src/shared/        HTTP y primitivas de UI
   api/                 Node + Express
@@ -68,7 +69,6 @@ data/
   geo/ mobility/ commerce/   artefactos migrados, un archivo por dominio
 scripts/
   migrate-legacy-data.mjs    extracción desde el visor legado
-  build-mercomuna.mjs        CSV de Incertianguis -> commerce/mercomuna.json
   verify-data.mjs            validación del contrato de datos
   dev.mjs                    arranque paralelo
 ```
@@ -100,12 +100,24 @@ Se conserva **Leaflet** y el lenguaje visual original. React es dueño del estad
 | GET | `/api/v1/mobility/network` | estaciones Metro/Metrobús |
 | GET | `/api/v1/mobility/stations/metro` | 195 estaciones |
 | GET | `/api/v1/mobility/stations/metrobus` | 324 estaciones |
-| GET | `/api/v1/commerce/directory` | MSR + tianguis |
-| GET | `/api/v1/commerce/msr` | mercados sobre ruedas |
-| GET | `/api/v1/commerce/tianguis?day=&alcaldia=&q=` | tianguis filtrados |
+| GET | `/api/v1/commerce/directory` | tianguis |
+| GET | `/api/v1/commerce/tianguis?day=&alcaldia=&colonia=&direccion=&giro=&vialidad=&q=` | tianguis filtrados |
 | GET | `/api/v1/commerce/mercomuna?q=&alimentos=1` | comercios que aceptan vales Mercomuna |
 | POST | `/api/v1/feedback` | registra una respuesta anónima sobre un comercio (201, o 400 si trae datos personales) |
 | GET | `/api/v1/feedback/summary` | respuestas agregadas por CP y giro |
+
+### Buscador
+
+El buscador filtra en vivo y ofrece las opciones en una lista agrupada por
+dimensión: dirección o tramo, día, giro, tipo de vialidad (`Avenida`, `Calle`,
+`Calzada`, `Eje`, `Cerrada`…), colonia y alcaldía. Cada opción muestra cuántos
+tianguis quedarían con los demás filtros aplicados; elegirla la convierte en un
+chip removible y el mapa se acerca a los resultados.
+
+El texto libre es tolerante a acentos y busca en calle, colonia, alcaldía, día,
+giro y vialidad. La lógica vive en `packages/contracts/src/commerce.js`
+(`filterTianguis`, `buildSearchOptions`, `vialidadDeTianguis`) y la comparten el
+cliente y la API, para que el conteo y los marcadores dibujados no discrepen.
 
 ## Datos
 
@@ -117,55 +129,38 @@ Los artefactos provienen del visor legado y se congelaron con checksum para pode
   "zmvm": 60,
   "metroStations": 195,
   "metrobusStations": 324,
-  "msr": 51,
   "tianguis": 1367
 }
 ```
 
-### Vales Mercomuna
-
-Capa opcional (chip **💳 Vales Mercomuna**, apagada por defecto) con los comercios
-donde se pueden usar los vales del programa Mercomuna, vigentes hasta el
-**31 de diciembre de 2026**.
-
-Viene del trabajo del equipo *Principio de Incertianguis* (Chilangatón 2026, reto
-"Comercio popular y barrial"): `incertianguis/data/processed/mercomuna.csv`
-— el directorio público de `comercios-mercomuna.cdmx.gob.mx` geocodificado
-contra el DENUE. `scripts/build-mercomuna.mjs` lo convierte en
-`data/commerce/mercomuna.json` (3 MB, ~320 KB con gzip).
-
-```json
-{
-  "resumen": {
-    "total": 8798,
-    "alimentos": 3858,
-    "precisos": 2029,
-    "aproximados": 6755,
-    "sinUbicacion": 14,
-    "porCp": 691
-  }
-}
-```
-
-La capa respeta la precisión de origen, porque solo el **23%** de los comercios
-tiene ubicación exacta:
-
-| `precision` | Qué se dibuja |
-| --- | --- |
-| `exacta` (2,029) | chincheta propia del comercio, visible desde zoom 13 |
-| `cp` (6,755) | **un círculo por código postal** (691), con el número de comercios; son centroides DENUE compartidos, no direcciones |
-| `sin_ubicacion` (14) | nada; solo cuentan en el chip |
-
-Nunca se pintan los centroides de CP como si fueran ubicaciones de comercio:
-`imprecisa: true` lo deja explícito en el contrato y la ficha de detalle lo
-advierte. La capa pesada se descarga solo cuando el chip se enciende por primera
-vez.
-
 Checksum del bundle legado: `3ab4cdb9614ff79410005bf886306236155c5ba99aa927fc44d1e6fff6c9d690`.
 
-Los **329 mercados públicos** del visor legado se excluyeron del producto: no se sirven por API ni se dibujan en el mapa. Se conservan los tianguis y las rutas de mercados sobre ruedas (MSR).
+Los **329 mercados públicos** y las **51 rutas de mercados sobre ruedas (MSR)** del visor legado se excluyeron del producto: no se sirven por API ni se dibujan en el mapa. El mapa conserva únicamente los tianguis.
 
 También se retiraron los **trazos de la Red MI**. Solo se conservan las estaciones de Metro y Metrobús: se dibujan tenues y aparecen al llegar a zoom 14.
+
+## Giro de los tianguis
+
+Cada punto del mapa es un puesto ilustrado (`apps/web/public/tianguis/`): la
+misma imagen en nueve colores, uno por categoría del catálogo del equipo de
+datos (`data/catalog/giros_catalogo.json`), más el rojo original para los
+tianguis que no declaran giro.
+
+El campo `GIRO` del directorio ADIP es texto libre y 1,053 de 1,367 filas vienen
+vacías (`na`). `npm run build:giros` lo cruza con `../tianguis-cdmx.csv` por la
+llave natural (alcaldía + colonia + calle + día) y escribe en cada tianguis:
+
+| campo | contenido |
+|---|---|
+| `giro` | texto original del CSV, sin perder información |
+| `categorias` | ids del catálogo, el principal primero (un giro compuesto puede traer varios) |
+| `sinGiro` | `true` cuando el directorio no declara giro |
+
+Las 27 filas que en vez de giro traen el conteo de puestos
+(`"103 básicos, 192 complementarios y 14 alimentos preparados"`) se ordenan por
+familias de mayor a menor puestos. El reparto actual: 1,053 sin dato, 158 bazar
+y chácharas, 107 abarrotes y canasta básica, 26 ropa y calzado, 20 comida
+preparada, 3 oficios y servicios.
 
 El runtime ya **no ejecuta Python**. La extracción desde el HTML legado es un paso de migración, no una dependencia de producción.
 
@@ -174,8 +169,6 @@ El runtime ya **no ejecuta Python**. La extracción desde el HTML legado es un p
 - Cliente y API funcionando con paridad visual y funcional respecto al visor legado.
 - Calendario semanal de tianguis con el conteo de abiertos por día, opción “Todos” y el día actual seleccionado por defecto.
 - Tests de datos y endpoints: `npm test`.
-- Capa de vales Mercomuna con chip apagado por defecto, respetando la precisión
-  de geocodificación de origen.
 - Pendientes principales: portar el ETL a Node y definir despliegue. Ver [`MIGRACION.md`](./MIGRACION.md).
 
 ### Retroalimentación (feedback)

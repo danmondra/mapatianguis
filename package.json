@@ -18,7 +18,9 @@
     "verify:data": "node scripts/verify-data.mjs",
     "migrate:data": "node scripts/migrate-legacy-data.mjs",
     "build:mercomuna": "node scripts/build-mercomuna.mjs",
-    "seed:feedback": "node scripts/seed-feedback.mjs"
+    "seed:feedback": "node scripts/seed-feedback.mjs",
+    "import:photos": "node scripts/import-photos.mjs",
+    "build:giros": "node scripts/build-giros.mjs"
   },
   "engines": {
     "node": ">=20"

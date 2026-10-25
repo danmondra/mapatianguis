@@ -1,0 +1,458 @@
+/* -------------------------------------------------------------------------
+   Inicio (maqueta estática inspirada en la app CDMX).
+   Solo estructura y estilos: sin datos ni interactividad. Los enlaces y
+   botones son marcadores; su único destino real será el mapa.
+   ---------------------------------------------------------------------- */
+
+.home-screen {
+  --home-green-dark: #0b4f49;
+  --home-green: #0f5f58;
+  --home-teal: #17766d;
+  --home-mint: #e8f4f2;
+  --home-mint-soft: #f2f8f7;
+  --home-icon-bg: #dcefec;
+  --home-icon-ink: #0f5953;
+  --home-brown: #93491c;
+  --home-text: #12211f;
+  --home-text-muted: #5a716e;
+  --home-line: #e3ecea;
+
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #ffffff;
+  color: var(--home-text);
+  font-family: var(--font-main);
+  /* La app móvil vive en una columna angosta; en escritorio se centra. */
+  scrollbar-width: thin;
+}
+
+.home-screen__inner {
+  width: 100%;
+  max-width: 520px;
+  min-height: 100%;
+  margin: 0 auto;
+  padding-bottom: 8px;
+  background: #ffffff;
+}
+
+/* ------------------------------- Cabecera ------------------------------ */
+
+.home-header {
+  position: relative;
+  padding: 10px 16px 20px;
+  color: #ffffff;
+  background:
+    radial-gradient(120% 90% at 50% -30%, #1a7a70 0%, #0f5f58 45%, #0b4f49 100%);
+  overflow: hidden;
+}
+
+/* Patrón de grecas al pie de la cabecera, dibujado con gradientes. */
+.home-header::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 46px;
+  opacity: 0.28;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.18) 0 10px, transparent 10px 20px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0 6px, transparent 6px 12px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 80%);
+  mask-image: linear-gradient(to bottom, transparent, #000 80%);
+  pointer-events: none;
+}
+
+.home-header__bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-header__emblem,
+.home-header__profile {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 1.1rem;
+  flex: 0 0 auto;
+}
+
+.home-header__profile {
+  border-color: #ffffff;
+  background: #e04a4a;
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.55);
+}
+
+.home-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.home-header__shield {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 6px 6px 16px 16px;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.home-header__brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.15;
+}
+
+.home-header__brand-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.home-header__brand-sub {
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.home-header__greeting {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.home-header__avatar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.16);
+  font-size: 1.4rem;
+}
+
+/* -------------------------------- Tarjeta ------------------------------ */
+
+.home-card {
+  position: relative;
+  margin: -8px 16px 0;
+  padding: 18px 18px 20px;
+  border-radius: 22px;
+  background: linear-gradient(160deg, #eef6f5 0%, #dceceb 100%);
+  border: 1px solid #d7e8e6;
+  overflow: hidden;
+}
+
+.home-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 18% 78%, rgba(15, 89, 83, 0.12) 0 12px, transparent 13px),
+    radial-gradient(circle at 82% 22%, rgba(15, 89, 83, 0.1) 0 9px, transparent 10px),
+    repeating-linear-gradient(135deg, rgba(15, 89, 83, 0.06) 0 2px, transparent 2px 14px);
+  pointer-events: none;
+}
+
+.home-card__title {
+  position: relative;
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0d4d47;
+}
+
+.home-card__stats {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.home-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-stat__icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  background: #f4f6f6;
+  color: #8d9b9a;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(15, 89, 83, 0.12);
+}
+
+.home-card__status {
+  position: relative;
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #1d3b38;
+}
+
+/* -------------------------------- Sección ------------------------------ */
+
+.home-section {
+  padding: 22px 16px 0;
+}
+
+.home-section__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.home-section__title {
+  margin: 0;
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--home-brown);
+}
+
+.home-section__action {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--home-icon-bg);
+  color: var(--home-icon-ink);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* ------------------------------- Accesos ------------------------------- */
+
+.home-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px 8px;
+}
+
+.home-shortcuts--scroll {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 96px;
+  justify-content: start;
+  gap: 12px;
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.home-shortcuts--scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.home-shortcut {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--home-text);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  cursor: pointer;
+}
+
+.home-shortcut:focus-visible,
+.home-section__action:focus-visible,
+.home-tab:focus-visible {
+  outline: 2px solid var(--home-teal);
+  outline-offset: 2px;
+}
+
+.home-shortcut__icon {
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  background: var(--home-icon-bg);
+  color: var(--home-icon-ink);
+  font-size: 1.5rem;
+}
+
+.home-shortcut__label--strong {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* Acceso propio del proyecto: ocupa el lugar de "Movilidad" en el grid de
+   Servicios y se remarca sin romper la retícula de tres columnas. */
+.home-shortcut--featured {
+  position: relative;
+  color: var(--home-green-dark);
+}
+
+.home-shortcut--featured .home-shortcut__icon {
+  width: 74px;
+  height: 74px;
+  margin: -4px 0;
+  background: linear-gradient(140deg, #1a8578, #0b4f49);
+  color: #ffffff;
+  font-size: 1.7rem;
+  box-shadow: 0 10px 18px rgba(11, 79, 73, 0.35);
+}
+
+.home-shortcut__label--featured {
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--home-green-dark);
+}
+
+/* --------------------------------- Aviso ------------------------------- */
+
+.home-notice {
+  margin: 22px 16px 0;
+  padding: 14px 16px;
+  border-left: 4px solid var(--home-teal);
+  border-radius: 12px;
+  background: var(--home-mint-soft);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--home-text-muted);
+}
+
+/* -------------------------------- Espacio ------------------------------ */
+
+/* Reserva el alto de la barra inferior para que el contenido no quede debajo. */
+.home-spacer {
+  height: 96px;
+}
+
+/* ------------------------------ Barra inferior ------------------------- */
+
+.home-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 10;
+  width: 100%;
+  max-width: 520px;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  align-items: end;
+  gap: 4px;
+  padding: 8px 8px 14px;
+  color: #ffffff;
+  background: linear-gradient(180deg, #17766d, #0b4f49);
+}
+
+.home-tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.82);
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.home-tab__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  font-size: 1.15rem;
+}
+
+/* La pestaña activa se subraya con la píldora clara de la app. */
+.home-tab::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 46px;
+  height: 0;
+  transform: translateX(-50%);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+  transition: height 0.15s ease;
+}
+
+.home-tab--active {
+  color: #ffffff;
+}
+
+.home-tab--active::after {
+  height: 100%;
+}
+
+@media (max-width: 380px) {
+  .home-shortcut__icon {
+    width: 56px;
+    height: 56px;
+    font-size: 1.3rem;
+  }
+
+  .home-shortcut {
+    font-size: 0.72rem;
+  }
+
+  .home-stat__icon {
+    width: 46px;
+    height: 46px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-tab::after {
+    transition: none;
+  }
+}

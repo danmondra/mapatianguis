@@ -9,6 +9,7 @@
     "./commerce": "./src/commerce.js",
     "./feedback": "./src/feedback.js",
     "./geo": "./src/geo.js",
+    "./giros": "./src/giros.js",
     "./mobility": "./src/mobility.js"
   }
 }

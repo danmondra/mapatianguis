@@ -6,14 +6,16 @@ import { useMapContext } from '../../map/MapProvider.jsx';
 const STATION_OPACITY = 0.55;
 
 /**
- * Estaciones de Metro y Metrobús. Se dibujan tenues y solo a partir del zoom
- * definido en `STATION_MIN_ZOOM` para no saturar la vista metropolitana.
+ * Estaciones de Metro y Metrobús como referencia visual. Se dibujan tenues y
+ * solo a partir de `STATION_MIN_ZOOM`.
+ *
+ * No son seleccionables: únicamente los tianguis y las alcaldías lo son. Sus
+ * iconos tampoco deben robar clicks a los tianguis que queden debajo.
  * @param {{
- *   data: import('@mapatianguis/contracts/mobility').MobilityNetwork,
- *   onSelect: (selection: { kind: 'metro'|'metrobus', data: any }) => void
+ *   data: import('@mapatianguis/contracts/mobility').MobilityNetwork
  * }} props
  */
-export function MobilityLayers({ data, onSelect }) {
+export function MobilityLayers({ data }) {
   const { registerLayer, unregisterLayer } = useMapContext();
 
   useEffect(() => {
@@ -21,12 +23,6 @@ export function MobilityLayers({ data, onSelect }) {
 
     const metroIcons = L.featureGroup();
     const metrobusIcons = L.featureGroup();
-
-    const fade = (marker) => {
-      marker.setOpacity(STATION_OPACITY);
-      marker.on('mouseover', () => marker.setOpacity(1));
-      marker.on('mouseout', () => marker.setOpacity(STATION_OPACITY));
-    };
 
     for (const station of data.metroStations ?? []) {
       const glyphHtml = station.has_glyph
@@ -46,22 +42,11 @@ export function MobilityLayers({ data, onSelect }) {
 
       const marker = L.marker([station.lat, station.lon], {
         icon: customIcon,
-        opacity: STATION_OPACITY
-      });
-      marker.bindPopup(`
-        <div style="font-weight:800; color:${station.color}; font-size:0.92rem; margin-bottom:2px;">
-          Metro ${station.nombre}
-        </div>
-        <div style="font-size:0.75rem; color:#475569;">
-          Línea ${station.linea} · ${station.tipo} · ${station.alcaldia}
-        </div>
-      `);
-
-      marker.on('click', () => {
-        onSelect({ kind: 'metro', data: station });
+        opacity: STATION_OPACITY,
+        interactive: false,
+        keyboard: false
       });
 
-      fade(marker);
       metroIcons.addLayer(marker);
     }
 
@@ -75,22 +60,11 @@ export function MobilityLayers({ data, onSelect }) {
 
       const marker = L.marker([station.lat, station.lon], {
         icon: customIcon,
-        opacity: STATION_OPACITY
-      });
-      marker.bindPopup(`
-        <div style="font-weight:800; color:#d81b60; font-size:0.92rem; margin-bottom:2px;">
-          Metrobús ${station.nombre}
-        </div>
-        <div style="font-size:0.75rem; color:#475569;">
-          ${station.linea} · Alcaldía ${station.alcaldia}
-        </div>
-      `);
-
-      marker.on('click', () => {
-        onSelect({ kind: 'metrobus', data: station });
+        opacity: STATION_OPACITY,
+        interactive: false,
+        keyboard: false
       });
 
-      fade(marker);
       metrobusIcons.addLayer(marker);
     }
 
@@ -101,7 +75,7 @@ export function MobilityLayers({ data, onSelect }) {
       unregisterLayer('metro_icons', metroIcons);
       unregisterLayer('metrobus_icons', metrobusIcons);
     };
-  }, [data, onSelect, registerLayer, unregisterLayer]);
+  }, [data, registerLayer, unregisterLayer]);
 
   return null;
 }

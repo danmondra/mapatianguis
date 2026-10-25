@@ -1,0 +1,105 @@
+/* -------------------------------------------------------------------------
+   Panel de filtros en móvil.
+   En escritorio sigue siendo la columna izquierda (legacy.css). Debajo de
+   820 px se convierte en una hoja que sube desde abajo: cerrada deja ver su
+   cabecera "medio asomada" y abierta toma la mayor parte de la pantalla.
+   ---------------------------------------------------------------------- */
+
+/* El asa superior solo existe en la versión móvil. */
+.sidebar-grip {
+  display: none;
+}
+
+@media (max-width: 820px) {
+  #sidebar,
+  #sidebar.collapsed {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: min(88vh, 720px);
+    margin-left: 0;
+    border-right: 0;
+    border-top: 1px solid var(--cdmx-border);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -8px 28px rgba(15, 89, 83, 0.22);
+    /* Cerrada: asoma solo la cabecera (~92 px). */
+    transform: translateY(calc(100% - 92px));
+    transition: transform 0.28s ease;
+    z-index: 1002;
+  }
+
+  /* Abierta: la hoja ocupa casi toda la pantalla. */
+  #sidebar:not(.collapsed) {
+    transform: translateY(0);
+  }
+
+  #sidebar .sidebar-header {
+    position: relative;
+    gap: 10px;
+    padding: 18px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-radius: 18px 18px 0 0;
+  }
+
+  /* Asa de arrastre: toda la franja superior alterna el panel. */
+  #sidebar .sidebar-grip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  #sidebar .sidebar-grip__bar {
+    width: 42px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  #sidebar .sidebar-grip:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.75);
+    outline-offset: -2px;
+  }
+
+  /* La flecha del escritorio se convierte en chevron arriba/abajo. */
+  #sidebar .btn-toggle-sidebar--collapse .sidebar-toggle__glyph {
+    display: inline-block;
+    transform: rotate(90deg);
+    transition: transform 0.2s ease;
+  }
+
+  #sidebar:not(.collapsed) .btn-toggle-sidebar--collapse .sidebar-toggle__glyph {
+    transform: rotate(-90deg);
+  }
+
+  /* La hoja tapa el mapa: su contenido hace su propio scroll. */
+  #sidebar .sidebar-scroll {
+    padding: 14px 16px 28px;
+    overscroll-behavior: contain;
+  }
+
+  /* El botón flotante "Abrir Menú" era para la columna; ya no hace falta. */
+  #btn-open-sidebar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 820px) and (prefers-reduced-motion: reduce) {
+  #sidebar,
+  #sidebar.collapsed {
+    transition: none;
+  }
+
+  #sidebar .btn-toggle-sidebar--collapse .sidebar-toggle__glyph {
+    transition: none;
+  }
+}

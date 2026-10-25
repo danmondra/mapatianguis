@@ -1,51 +1,73 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getTodayName, WEEK_DAYS } from '@mapatianguis/contracts';
-import { tianguisMatchesDay } from '@mapatianguis/contracts/commerce';
+import { getTodayName } from '@mapatianguis/contracts';
+import { buildSearchOptions } from '@mapatianguis/contracts/commerce';
 import { findNearbyStations } from '@mapatianguis/contracts/mobility';
 import { MapProvider, useMapContext } from '../map/MapProvider.jsx';
 import { useUserLocation } from '../map/useUserLocation.js';
 import { Sidebar } from '../shell/Sidebar.jsx';
 import { MapFabStack } from '../shell/MapFabStack.jsx';
 import { QuickAccess } from '../shell/QuickAccess.jsx';
-import { DetailCard } from '../shell/DetailCard.jsx';
 import { TianguisPreview } from '../shell/TianguisPreview.jsx';
 import { GeoLayers } from '../domains/geo/GeoLayers.jsx';
 import { fetchGeoLayers } from '../domains/geo/api.js';
 import { CommerceLayers } from '../domains/commerce/CommerceLayers.jsx';
 import { CommerceSearch } from '../domains/commerce/CommerceSearch.jsx';
 import { CommerceControls } from '../domains/commerce/CommerceControls.jsx';
-import { fetchCommerceDirectory, fetchMercomuna } from '../domains/commerce/api.js';
-import { MercomunaLayers } from '../domains/commerce/MercomunaLayers.jsx';
+import { fetchCommerceDirectory } from '../domains/commerce/api.js';
 import { MobilityLayers } from '../domains/mobility/MobilityLayers.jsx';
-import { MobilitySection } from '../domains/mobility/MobilitySection.jsx';
+import { MobilityLegend } from '../domains/mobility/MobilityLegend.jsx';
 import { fetchMobilityNetwork } from '../domains/mobility/api.js';
+import { HomeScreen } from './HomeScreen.jsx';
 
 const TIANGUIS_PREVIEW_ZOOM = 16;
 /** Mitad del panel derecho: deja el marcador en el centro del área visible. */
 const PREVIEW_PANEL_OFFSET_PX = 180;
 
+/** Filtros que no dependen del calendario ni de los giros del panel. */
+const EMPTY_SEARCH_FILTERS = Object.freeze({
+  q: '',
+  vialidad: null,
+  direccion: null,
+  colonia: null,
+  alcaldia: null
+});
+
 export default function App() {
+  // El home es la entrada. El visor se monta al abrirlo y se desmonta al
+  // volver, para no dejar el mapa vivo debajo de una pantalla estática.
+  const [view, setView] = useState('home');
+
+  if (view === 'home') {
+    return <HomeScreen onOpenMap={() => setView('map')} />;
+  }
+
   return (
     <MapProvider>
-      <AppShell />
+      <AppShell onGoHome={() => setView('home')} />
     </MapProvider>
   );
 }
 
-function AppShell() {
-  const { map, toggleBaseMap, resetView, refreshSize, visibleLayers, setLayerVisible } =
+function AppShell({ onGoHome }) {
+  const { map, toggleBaseMap, resetView, refreshSize, setLayerVisible } =
     useMapContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [data, setData] = useState({ geo: null, mobility: null, commerce: null });
-  const [mercomuna, setMercomuna] = useState(null);
-  const [mercomunaError, setMercomunaError] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [selected, setSelected] = useState(null);
   const [selectedDay, setSelectedDay] = useState(() => getTodayName());
+  // Lista vacía = todos los giros. Se guarda como arreglo ordenado para que el
+  // filtro del mapa se reaplique sólo cuando cambia de verdad.
+  const [selectedGiros, setSelectedGiros] = useState([]);
+  // Filtros del buscador que no tienen un control propio en el panel.
+  const [searchFilters, setSearchFilters] = useState(EMPTY_SEARCH_FILTERS);
 
   const commerceMapRef = useRef(null);
-  const selectedDayRef = useRef(selectedDay);
+  // El mapa se sincroniza en un efecto: el buscador y el panel comparten un
+  // solo objeto de filtros y no pueden quedar desfasados.
+  const filtersRef = useRef(null);
+  const fitNextRef = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,26 +89,6 @@ function AppShell() {
     };
   }, []);
 
-  // La capa de vales es opcional: se pide solo la primera vez que se enciende.
-  useEffect(() => {
-    if (!visibleLayers.mercomuna || mercomuna) return undefined;
-
-    let cancelled = false;
-    setMercomunaError(null);
-
-    fetchMercomuna()
-      .then((directory) => {
-        if (!cancelled) setMercomuna(directory);
-      })
-      .catch((error) => {
-        if (!cancelled) setMercomunaError(error.message);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [visibleLayers.mercomuna, mercomuna]);
-
   const openSidebar = useCallback(() => {
     setSidebarCollapsed(false);
     setTimeout(refreshSize, 300);
@@ -101,18 +103,15 @@ function AppShell() {
 
   const handleSelect = useCallback(
     (selection) => {
+      // Solo los tianguis abren la ficha de selección.
+      if (selection?.kind !== 'tianguis') return;
+
       setSelected(selection);
-
-      if (selection?.kind === 'tianguis') {
-        // La previsualización siempre muestra las estaciones de referencia.
-        setLayerVisible('metro_icons', true);
-        setLayerVisible('metrobus_icons', true);
-        return;
-      }
-
-      openSidebar();
+      // La previsualización siempre muestra las estaciones de referencia.
+      setLayerVisible('metro_icons', true);
+      setLayerVisible('metrobus_icons', true);
     },
-    [openSidebar, setLayerVisible]
+    [setLayerVisible]
   );
 
   const handleCloseSelection = useCallback(() => setSelected(null), []);
@@ -133,48 +132,127 @@ function AppShell() {
 
   const handleCommerceReady = useCallback((api) => {
     commerceMapRef.current = api;
-    api?.setDayFilter(selectedDayRef.current);
+    if (api && filtersRef.current) api.setFilters(filtersRef.current);
   }, []);
 
-  const handleSearch = (query) => {
-    commerceMapRef.current?.focusTianguis(query);
+  const handleDayChange = (day) => setSelectedDay(day || null);
+
+  // Un giro se prende y apaga; sin ninguno prendido el mapa muestra todos.
+  const handleToggleGiro = (giroId) => {
+    setSelectedGiros((previous) =>
+      previous.includes(giroId)
+        ? previous.filter((id) => id !== giroId)
+        : [...previous, giroId]
+    );
   };
 
-  const handleDayChange = (day) => {
-    const nextDay = day || null;
-    selectedDayRef.current = nextDay;
-    setSelectedDay(nextDay);
-    commerceMapRef.current?.setDayFilter(nextDay);
-  };
+  const handleClearGiros = () => setSelectedGiros([]);
+
+  const handleSearchQuery = useCallback((q) => {
+    setSearchFilters((previous) => ({ ...previous, q }));
+  }, []);
+
+  // Elegir una opción de la lista aplica ese filtro y limpia el texto: el
+  // valor ya quedó expresado como chip, no hace falta seguir buscándolo.
+  const handleApplySearchOption = useCallback(({ family, value }) => {
+    setSearchFilters((previous) => ({ ...previous, q: '' }));
+
+    if (family === 'day') {
+      setSelectedDay((previous) => (previous === value ? null : value));
+    } else if (family === 'giro') {
+      setSelectedGiros((previous) =>
+        previous.includes(value) ? previous.filter((id) => id !== value) : [value]
+      );
+    } else {
+      setSearchFilters((previous) => ({
+        ...previous,
+        q: '',
+        [family]: previous[family] === value ? null : value
+      }));
+    }
+
+    fitNextRef.current = true;
+  }, []);
+
+  const handleRemoveSearchFilter = useCallback(({ family, value }) => {
+    if (family === 'day') {
+      setSelectedDay(null);
+    } else if (family === 'giro') {
+      setSelectedGiros((previous) => previous.filter((id) => id !== value));
+    } else {
+      setSearchFilters((previous) => ({ ...previous, [family]: null }));
+    }
+    fitNextRef.current = true;
+  }, []);
+
+  const handleClearSearch = useCallback(() => {
+    setSearchFilters(EMPTY_SEARCH_FILTERS);
+    setSelectedDay(null);
+    setSelectedGiros([]);
+    fitNextRef.current = true;
+  }, []);
+
+  const commerceFilters = useMemo(
+    () => ({
+      q: searchFilters.q,
+      vialidad: searchFilters.vialidad,
+      direccion: searchFilters.direccion,
+      colonia: searchFilters.colonia,
+      alcaldia: searchFilters.alcaldia,
+      day: selectedDay,
+      giro: selectedGiros.length > 0 ? selectedGiros : null
+    }),
+    [searchFilters, selectedDay, selectedGiros]
+  );
+
+  // Un solo punto de sincronización con la capa: filtros del buscador, día y
+  // giros llegan juntos, y la cámara sólo se mueve al elegir una opción.
+  useEffect(() => {
+    filtersRef.current = commerceFilters;
+    const api = commerceMapRef.current;
+    if (!api) return;
+    api.setFilters(commerceFilters);
+    if (fitNextRef.current) {
+      fitNextRef.current = false;
+      api.fitFiltered();
+    }
+  }, [commerceFilters]);
 
   const commerce = data.commerce;
 
-  const dayCounts = useMemo(() => {
-    const counts = Object.fromEntries(WEEK_DAYS.map((day) => [day.value, 0]));
-    for (const tianguis of commerce?.tianguis ?? []) {
-      for (const day of WEEK_DAYS) {
-        if (tianguisMatchesDay(tianguis, day.value)) counts[day.value] += 1;
-      }
-    }
-    return counts;
-  }, [commerce]);
+  // Opciones y conteos del buscador. Se calculan con todo el directorio una
+  // sola vez por cambio de filtros; cada dimensión se cuenta sin aplicarse a
+  // sí misma para que la lista no se llene de ceros.
+  const searchOptions = useMemo(
+    () => buildSearchOptions(commerce?.tianguis ?? [], commerceFilters),
+    [commerce, commerceFilters]
+  );
 
-  const tianguisCount = selectedDay
-    ? dayCounts[selectedDay] ?? 0
-    : commerce?.tianguis.length ?? 0;
+  const dayCounts = useMemo(
+    () => Object.fromEntries(searchOptions.days.map((day) => [day.value, day.count])),
+    [searchOptions]
+  );
 
-  const mercomunaCount = mercomuna?.resumen.conCoordenada ?? null;
+  // El panel sólo ofrece los giros con puestos en el mapa con los filtros
+  // actuales (día, búsqueda y vialidad incluidos).
+  const giroCounts = useMemo(
+    () =>
+      new Map(
+        searchOptions.giros
+          .filter((giro) => giro.count > 0)
+          .map((giro) => [giro.value, giro.count])
+      ),
+    [searchOptions]
+  );
 
-  // Aviso honesto cuando el chip está activo pero la capa no puede dibujarse.
-  const mercomunaHint = mercomunaError
-    ? `No se pudieron cargar los comercios con vales: ${mercomunaError}`
-    : !mercomuna
-      ? 'Cargando comercios con vales…'
-      : mercomuna.resumen.sinUbicacion > 0
-        ? `Se dibujan ${mercomuna.resumen.conCoordenada.toLocaleString('es-MX')} comercios. ` +
-          `${mercomuna.resumen.aproximados.toLocaleString('es-MX')} se agrupan por código postal ` +
-          `y ${mercomuna.resumen.sinUbicacion} no tienen ubicación publicada.`
-        : null;
+  const activeSearchFilters = useMemo(
+    () => ({
+      ...searchFilters,
+      day: selectedDay,
+      giros: selectedGiros
+    }),
+    [searchFilters, selectedDay, selectedGiros]
+  );
 
   const stationIndex = useMemo(
     () => [
@@ -191,9 +269,7 @@ function AppShell() {
   );
 
   const nearbyStations = useMemo(() => {
-    if (!selected || (selected.kind !== 'tianguis' && selected.kind !== 'msr')) {
-      return [];
-    }
+    if (selected?.kind !== 'tianguis') return [];
     return findNearbyStations(stationIndex, selected.data.lat, selected.data.lon);
   }, [selected, stationIndex]);
 
@@ -209,31 +285,34 @@ function AppShell() {
         <span>Abrir Menú</span>
       </button>
 
-      <Sidebar collapsed={sidebarCollapsed} onToggle={handleToggleSidebar}>
-        <DetailCard
-          selection={selected?.kind === 'tianguis' ? null : selected}
-          nearbyStations={nearbyStations}
-          onClose={handleCloseSelection}
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggle={handleToggleSidebar}
+        onGoHome={onGoHome}
+      >
+        <CommerceSearch
+          options={searchOptions}
+          filters={activeSearchFilters}
+          onQueryChange={handleSearchQuery}
+          onSelect={handleApplySearchOption}
+          onRemove={handleRemoveSearchFilter}
+          onClear={handleClearSearch}
         />
-
-        <CommerceSearch onSearch={handleSearch} />
 
         {commerce && (
           <CommerceControls
-            counts={{
-              tianguis: tianguisCount,
-              msr: commerce.msr.length,
-              mercomuna: mercomunaCount
-            }}
             dayCounts={dayCounts}
-            totalCount={commerce.tianguis.length}
+            giroCounts={giroCounts}
+            totalCount={searchOptions.dayTotal}
             selectedDay={selectedDay}
             onDayChange={handleDayChange}
-            mercomunaHint={mercomunaHint}
+            selectedGiros={selectedGiros}
+            onToggleGiro={handleToggleGiro}
+            onClearGiros={handleClearGiros}
           />
         )}
 
-        <MobilitySection />
+        <MobilityLegend />
         <QuickAccess />
       </Sidebar>
 
@@ -254,13 +333,12 @@ function AppShell() {
         {!loadError && !commerce && <div className="map-status">Cargando capas…</div>}
 
         <GeoLayers data={data.geo} />
-        <MobilityLayers data={data.mobility} onSelect={handleSelect} />
+        <MobilityLayers data={data.mobility} />
         <CommerceLayers
           data={commerce}
           onSelect={handleSelect}
           onReady={handleCommerceReady}
         />
-        <MercomunaLayers data={mercomuna} onSelect={handleSelect} />
 
         <TianguisPreview
           selection={selected}

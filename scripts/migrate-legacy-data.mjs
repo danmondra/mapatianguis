@@ -39,6 +39,67 @@ function extractMapData(html) {
   return { data: JSON.parse(raw), raw };
 }
 
+/**
+ * Quita del catálogo de giros los campos heredados de Mercomuna. El catálogo
+ * conserva la clasificación de giros, pero el programa Mercomuna ya no forma
+ * parte del producto.
+ */
+async function sanitizeGirosCatalog() {
+  const jsonPath = path.join(ROOT, 'data', 'catalog', 'giros_catalogo.json');
+  try {
+    const catalog = JSON.parse(await readFile(jsonPath, 'utf8'));
+    for (const categoria of catalog.categorias ?? []) delete categoria.mercomuna_default;
+    for (const subgiro of catalog.subgiros ?? []) delete subgiro.mercomuna;
+    await writeFile(jsonPath, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8');
+  } catch {
+    // Si el legado no trae catálogo, no hay nada que limpiar.
+  }
+
+  const csvPath = path.join(ROOT, 'data', 'catalog', 'giros_catalogo.csv');
+  try {
+    const lines = (await readFile(csvPath, 'utf8')).split('\n');
+    const column = lines[0].split(',').indexOf('mercomuna');
+    if (column < 0) return;
+    await writeFile(
+      csvPath,
+      lines.map((line) => removeCsvColumn(line, column)).join('\n'),
+      'utf8'
+    );
+  } catch {
+    // Igual que arriba: el catálogo es opcional para el mapa.
+  }
+}
+
+/** Quita una columna de una línea CSV respetando las celdas entre comillas. */
+function removeCsvColumn(line, index) {
+  if (!line) return line;
+
+  let quoted = false;
+  let start = 0;
+  const spans = [];
+
+  for (let cursor = 0; cursor < line.length; cursor += 1) {
+    const character = line[cursor];
+    if (character === '"') {
+      if (quoted && line[cursor + 1] === '"') {
+        cursor += 1;
+        continue;
+      }
+      quoted = !quoted;
+    } else if (character === ',' && !quoted) {
+      spans.push([start, cursor]);
+      start = cursor + 1;
+    }
+  }
+  spans.push([start, line.length]);
+
+  if (index >= spans.length) return line;
+  const [from, to] = spans[index];
+  return index < spans.length - 1
+    ? line.slice(0, from) + line.slice(to + 1)
+    : line.slice(0, from - 1) + line.slice(to);
+}
+
 function extractStyles(html) {
   const match = html.match(/<style>([\s\S]*?)<\/style>/);
   if (!match) throw new Error('No se encontró el bloque <style> en el HTML legado.');
@@ -65,7 +126,6 @@ async function main() {
     zmvm: data.zmvm?.features?.length ?? 0,
     metroStations: data.metro_stations?.length ?? 0,
     metrobusStations: data.metrobus_stations?.length ?? 0,
-    msr: data.msr?.length ?? 0,
     tianguis: data.tianguis?.length ?? 0
   };
 
@@ -75,8 +135,7 @@ async function main() {
   // El legado incluye los trazos de la Red MI; el producto solo publica estaciones.
   await writeJson('data/mobility/metro-stations.json', data.metro_stations ?? []);
   await writeJson('data/mobility/metrobus-stations.json', data.metrobus_stations ?? []);
-  // El legado incluye 329 mercados públicos; el producto ya no los publica.
-  await writeJson('data/commerce/msr.json', data.msr ?? []);
+  // El legado incluye 329 mercados públicos y 51 rutas MSR; el producto no los publica.
   await writeJson('data/commerce/tianguis.json', data.tianguis ?? []);
   await writeJson('data/meta.json', {
     source: 'tianuisCDMX/mapa_comercio_movilidad_cdmx.html',
@@ -97,6 +156,7 @@ async function main() {
       console.warn(`  ! No se encontró data/catalog/${file}; se omite.`);
     }
   }
+  await sanitizeGirosCatalog();
 
   // Estilos y fuentes: se conservan para que el mapa se vea idéntico.
   const css = extractStyles(html);

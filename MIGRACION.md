@@ -44,7 +44,6 @@ Lo que **falta** para completar la intención original (JS en todo el pipeline) 
 | Geo | ZMVM | 1.2 MB | 230 KB |
 | Movilidad | estaciones Metro | 39 KB | 7 KB |
 | Movilidad | estaciones Metrobús | 38 KB | 8 KB |
-| Comercio | MSR | 10 KB | 3 KB |
 | Comercio | tianguis | 295 KB | 53 KB |
 | **Total** | | **2.2 MB** | **~0.55 MB** |
 
@@ -90,7 +89,7 @@ apps/web (React + Vite)          apps/api (Node + Express)
 | Slice | Cliente | API | Datos |
 | --- | --- | --- | --- |
 | `geo` | `GeoLayers` | `geo.routes/service` | alcaldías, ZMVM |
-| `commerce` | `CommerceLayers`, `CommerceSearch`, `CommerceControls` | `commerce.routes/service` | MSR, tianguis |
+| `commerce` | `CommerceLayers`, `CommerceSearch`, `CommerceControls` | `commerce.routes/service` | tianguis |
 | `mobility` | `MobilityLayers`, `MobilitySection` | `mobility.routes/service` | estaciones Metro/Metrobús |
 | `shell` | `Sidebar`, `DetailCard`, `MapFabStack`, `QuickAccess` | — | — |
 | `shared` | HTTP, `Chip`, `Section`, selección | errores HTTP | — |
@@ -128,11 +127,11 @@ React no renderiza los marcadores. `MapProvider` crea el mapa y mantiene un regi
 | Cambio | Motivo |
 | --- | --- |
 | Calendario semanal de tianguis con conteo por día, opción “Todos” y el día actual seleccionado | Reemplaza el botón “Abrir Hoy”; normaliza acentos para `MIÉRCOLES`/`SÁBADO` |
-| Se retiraron los 329 mercados públicos | El producto se enfoca en tianguis y MSR; se eliminaron datos, endpoint, capa, chip y ficha |
+| Se retiraron los 329 mercados públicos y las 51 rutas MSR | El producto se enfoca solo en tianguis; se eliminaron datos, endpoints, capas, chips y fichas |
 | Se retiraron los trazos de la Red MI | Las estaciones quedan como referencia; se eliminaron datos, capas y selector de líneas |
 | Las estaciones se atenúan y aparecen con zoom 14 | Evitan saturar la vista metropolitana sin perder el detalle local |
 | Se eliminó el planificador y todo el dominio de ruteo | La app es informativa sobre tianguis, no una app de navegación |
-| El buscador resuelve tianguis por colonia, alcaldía o tramo de calle | Reemplaza la búsqueda lineal de mercados del legado |
+| El buscador filtra por dirección, día, giro, vialidad, colonia y alcaldía, y muestra las opciones en lista | Reemplaza la búsqueda lineal de mercados del legado y el `focusTianguis` que sólo abría el primer resultado |
 
 ---
 
