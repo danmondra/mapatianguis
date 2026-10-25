@@ -17,7 +17,8 @@
     "test": "node --test apps/api/test/*.test.js",
     "verify:data": "node scripts/verify-data.mjs",
     "migrate:data": "node scripts/migrate-legacy-data.mjs",
-    "build:mercomuna": "node scripts/build-mercomuna.mjs"
+    "build:mercomuna": "node scripts/build-mercomuna.mjs",
+    "seed:feedback": "node scripts/seed-feedback.mjs"
   },
   "engines": {
     "node": ">=20"

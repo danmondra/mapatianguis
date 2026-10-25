@@ -7,6 +7,7 @@ import express from 'express';
 import { API_PREFIX, API_ROUTES } from '@mapatianguis/contracts';
 import { readData } from './data/store.js';
 import { commerceRouter } from './domains/commerce/commerce.routes.js';
+import { feedbackRouter } from './domains/feedback/feedback.routes.js';
 import { geoRouter } from './domains/geo/geo.routes.js';
 import { mobilityRouter } from './domains/mobility/mobility.routes.js';
 
@@ -53,6 +54,7 @@ export function createApp() {
 
   app.use(`${API_PREFIX}/geo`, geoRouter);
   app.use(`${API_PREFIX}/commerce`, commerceRouter);
+  app.use(`${API_PREFIX}/feedback`, feedbackRouter);
   app.use(`${API_PREFIX}/mobility`, mobilityRouter);
 
   app.use(API_PREFIX, (_request, response) => {

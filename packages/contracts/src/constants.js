@@ -18,6 +18,10 @@ export const API_ROUTES = Object.freeze({
     tianguis: `${API_PREFIX}/commerce/tianguis`,
     mercomuna: `${API_PREFIX}/commerce/mercomuna`
   },
+  feedback: {
+    events: `${API_PREFIX}/feedback`,
+    summary: `${API_PREFIX}/feedback/summary`
+  },
   mobility: {
     network: `${API_PREFIX}/mobility/network`,
     metroStations: `${API_PREFIX}/mobility/stations/metro`,

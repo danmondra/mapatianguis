@@ -42,6 +42,7 @@ npm run verify:data
 | `npm run migrate:data -- ../ruta/mapa.html` | Migra desde otro HTML |
 | `npm run build:mercomuna` | Genera `data/commerce/mercomuna.json` desde el cruce de Incertianguis |
 | `npm run build:mercomuna -- --source=<ruta.csv>` | Usa otro CSV de entrada |
+| `npm run seed:feedback` | Regenera `data/feedback/events.json` con 60 eventos sintéticos |
 
 ## Arquitectura
 
@@ -103,6 +104,8 @@ Se conserva **Leaflet** y el lenguaje visual original. React es dueño del estad
 | GET | `/api/v1/commerce/msr` | mercados sobre ruedas |
 | GET | `/api/v1/commerce/tianguis?day=&alcaldia=&q=` | tianguis filtrados |
 | GET | `/api/v1/commerce/mercomuna?q=&alimentos=1` | comercios que aceptan vales Mercomuna |
+| POST | `/api/v1/feedback` | registra una respuesta anónima sobre un comercio (201, o 400 si trae datos personales) |
+| GET | `/api/v1/feedback/summary` | respuestas agregadas por CP y giro |
 
 ## Datos
 
@@ -174,3 +177,15 @@ El runtime ya **no ejecuta Python**. La extracción desde el HTML legado es un p
 - Capa de vales Mercomuna con chip apagado por defecto, respetando la precisión
   de geocodificación de origen.
 - Pendientes principales: portar el ETL a Node y definir despliegue. Ver [`MIGRACION.md`](./MIGRACION.md).
+
+### Retroalimentación (feedback)
+
+Dominio para recibir las respuestas voluntarias del prototipo *Canjea Cerca* (repo `incertianguis`, carpeta `app/`).
+
+- `POST /api/v1/feedback` recibe `{fecha, cp, giro, respuesta, encontro, dificultad, busca}` y responde `201 {ok:true}`. Responde `400 {error, detalles}` cuando:
+  - trae cualquier otro campo (`lat`, `lon`, `nombre`, `telefono`...);
+  - el texto libre parece un teléfono, correo, URL, coordenada, CURP o RFC;
+  - el CP no es de la CDMX o la fecha trae hora.
+- `GET /api/v1/feedback/summary` agrega por `cp` y `giro`: `aceptados`, `noAceptados`, `tasaAceptacion`, `tasaRechazo`, `encontro`, `dificultadComun` y `productosBuscados`. Va con `Cache-Control: no-store`.
+- Los eventos se guardan en `data/feedback/events.json`. El archivo versionado trae **60 eventos sintéticos** (Iztapalapa, Tlalpan y Coyoacán, 20 cada una). Los CP son reales; las respuestas son inventadas. Para regenerarlos: `npm run seed:feedback`. Los tests escriben en una copia temporal (`FEEDBACK_FILE`).
+- El contrato (validación y agregado) vive en `packages/contracts/src/feedback.js`.

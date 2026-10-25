@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.js",
     "./commerce": "./src/commerce.js",
+    "./feedback": "./src/feedback.js",
     "./geo": "./src/geo.js",
     "./mobility": "./src/mobility.js"
   }

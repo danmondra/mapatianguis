@@ -1,0 +1,542 @@
+[
+ {
+  "fecha": "2026-10-19",
+  "cp": "09440",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-20",
+  "cp": "09440",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-21",
+  "cp": "09440",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-22",
+  "cp": "09440",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "horario",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-23",
+  "cp": "09440",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "horario",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-24",
+  "cp": "09440",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "horario",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-25",
+  "cp": "09096",
+  "giro": "Tianguis",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "pan"
+ },
+ {
+  "fecha": "2026-10-19",
+  "cp": "09096",
+  "giro": "Tianguis",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "pan"
+ },
+ {
+  "fecha": "2026-10-20",
+  "cp": "09096",
+  "giro": "Tianguis",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "pan dulce"
+ },
+ {
+  "fecha": "2026-10-21",
+  "cp": "09096",
+  "giro": "Tianguis",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-22",
+  "cp": "09096",
+  "giro": "Tianguis",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-23",
+  "cp": "09577",
+  "giro": "Mercado",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "pan"
+ },
+ {
+  "fecha": "2026-10-24",
+  "cp": "09577",
+  "giro": "Mercado",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "distancia",
+  "busca": "tortillas"
+ },
+ {
+  "fecha": "2026-10-25",
+  "cp": "09577",
+  "giro": "Mercado",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-19",
+  "cp": "09577",
+  "giro": "Mercado",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-20",
+  "cp": "09438",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "carne"
+ },
+ {
+  "fecha": "2026-10-21",
+  "cp": "09438",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "sin_producto",
+  "busca": "carne"
+ },
+ {
+  "fecha": "2026-10-22",
+  "cp": "09438",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "sin_producto",
+  "busca": "verduras"
+ },
+ {
+  "fecha": "2026-10-23",
+  "cp": "09438",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "sin_producto",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-24",
+  "cp": "09438",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "sin_producto",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-25",
+  "cp": "14250",
+  "giro": "Pollería",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-19",
+  "cp": "14250",
+  "giro": "Pollería",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-20",
+  "cp": "14250",
+  "giro": "Pollería",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-21",
+  "cp": "14250",
+  "giro": "Pollería",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "horario",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-22",
+  "cp": "14250",
+  "giro": "Pollería",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "horario",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-23",
+  "cp": "14250",
+  "giro": "Pollería",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "horario",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-24",
+  "cp": "14250",
+  "giro": "Carnicería",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-25",
+  "cp": "14250",
+  "giro": "Carnicería",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "nada",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-19",
+  "cp": "14250",
+  "giro": "Carnicería",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "nada",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-20",
+  "cp": "14734",
+  "giro": "Tianguis",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "carne"
+ },
+ {
+  "fecha": "2026-10-21",
+  "cp": "14734",
+  "giro": "Tianguis",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "queso"
+ },
+ {
+  "fecha": "2026-10-22",
+  "cp": "14734",
+  "giro": "Tianguis",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "queso"
+ },
+ {
+  "fecha": "2026-10-23",
+  "cp": "14734",
+  "giro": "Tianguis",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "carne"
+ },
+ {
+  "fecha": "2026-10-24",
+  "cp": "14734",
+  "giro": "Tianguis",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-25",
+  "cp": "14734",
+  "giro": "Tianguis",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-19",
+  "cp": "14734",
+  "giro": "Tianguis",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-20",
+  "cp": "14426",
+  "giro": "Tianguis",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "tortillas"
+ },
+ {
+  "fecha": "2026-10-21",
+  "cp": "14426",
+  "giro": "Tianguis",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "tortillas"
+ },
+ {
+  "fecha": "2026-10-22",
+  "cp": "14426",
+  "giro": "Tianguis",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "distancia",
+  "busca": "una tortillería"
+ },
+ {
+  "fecha": "2026-10-23",
+  "cp": "14426",
+  "giro": "Tianguis",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-24",
+  "cp": "04850",
+  "giro": "Mercado",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "carne"
+ },
+ {
+  "fecha": "2026-10-25",
+  "cp": "04850",
+  "giro": "Mercado",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "pan"
+ },
+ {
+  "fecha": "2026-10-19",
+  "cp": "04850",
+  "giro": "Mercado",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "distancia",
+  "busca": "pescado"
+ },
+ {
+  "fecha": "2026-10-20",
+  "cp": "04850",
+  "giro": "Mercado",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-21",
+  "cp": "04850",
+  "giro": "Mercado",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-22",
+  "cp": "04850",
+  "giro": "Mercado",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "distancia",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-23",
+  "cp": "04620",
+  "giro": "Pollería",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "fruta"
+ },
+ {
+  "fecha": "2026-10-24",
+  "cp": "04620",
+  "giro": "Pollería",
+  "respuesta": "no_aceptado",
+  "encontro": "no",
+  "dificultad": "no_aceptaban",
+  "busca": "verduras"
+ },
+ {
+  "fecha": "2026-10-25",
+  "cp": "04620",
+  "giro": "Pollería",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "sin_producto",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-19",
+  "cp": "04620",
+  "giro": "Pollería",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "sin_producto",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-20",
+  "cp": "04620",
+  "giro": "Pollería",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "sin_producto",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-21",
+  "cp": "04909",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "nada",
+  "busca": "medicinas"
+ },
+ {
+  "fecha": "2026-10-22",
+  "cp": "04909",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "nada",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-23",
+  "cp": "04909",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "nada",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-24",
+  "cp": "04909",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "nada",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-25",
+  "cp": "04909",
+  "giro": "Abarrotes y misceláneas",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "nada",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-19",
+  "cp": "04480",
+  "giro": "Cremería, lácteos y embutidos",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "nada",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-20",
+  "cp": "04480",
+  "giro": "Cremería, lácteos y embutidos",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "nada",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-21",
+  "cp": "04480",
+  "giro": "Cremería, lácteos y embutidos",
+  "respuesta": "aceptado",
+  "encontro": "si",
+  "dificultad": "nada",
+  "busca": null
+ },
+ {
+  "fecha": "2026-10-22",
+  "cp": "04480",
+  "giro": "Cremería, lácteos y embutidos",
+  "respuesta": "aceptado",
+  "encontro": "parcial",
+  "dificultad": "nada",
+  "busca": null
+ }
+]
