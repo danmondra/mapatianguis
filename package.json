@@ -16,7 +16,8 @@
     "start": "npm run start -w @mapatianguis/api",
     "test": "node --test apps/api/test/*.test.js",
     "verify:data": "node scripts/verify-data.mjs",
-    "migrate:data": "node scripts/migrate-legacy-data.mjs"
+    "migrate:data": "node scripts/migrate-legacy-data.mjs",
+    "build:mercomuna": "node scripts/build-mercomuna.mjs"
   },
   "engines": {
     "node": ">=20"

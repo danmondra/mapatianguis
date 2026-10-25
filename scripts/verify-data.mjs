@@ -37,43 +37,19 @@ function validateCollection(name, items, requiredFields) {
 const meta = await readJson('meta.json');
 const alcaldias = await readJson('geo/alcaldias.json');
 const zmvm = await readJson('geo/zmvm.json');
-const transport = await readJson('mobility/transport.json');
 const metroStations = await readJson('mobility/metro-stations.json');
 const metrobusStations = await readJson('mobility/metrobus-stations.json');
-const mercados = await readJson('commerce/mercados.json');
 const msr = await readJson('commerce/msr.json');
 const tianguis = await readJson('commerce/tianguis.json');
+const mercomuna = await readJson('commerce/mercomuna.json');
 
 expect(alcaldias.type === 'FeatureCollection', 'alcaldias: no es FeatureCollection');
 expect(zmvm.type === 'FeatureCollection', 'zmvm: no es FeatureCollection');
 expect(alcaldias.features.length === meta.counts.alcaldias, 'alcaldias: conteo distinto al meta');
 expect(zmvm.features.length === meta.counts.zmvm, 'zmvm: conteo distinto al meta');
 
-const transportLines = Object.values(transport).reduce(
-  (total, layer) => total + (layer.features?.length ?? 0),
-  0
-);
-expect(
-  transportLines === meta.counts.transportLines,
-  `transport: ${transportLines} trazos, meta dice ${meta.counts.transportLines}`
-);
-
-for (const [agency, layer] of Object.entries(transport)) {
-  expect(Array.isArray(layer.features), `transport.${agency}: sin features`);
-  for (const feature of layer.features) {
-    expect(feature.type === 'Feature', `transport.${agency}: feature inválido`);
-    expect(
-      feature.geometry?.type === 'LineString' && feature.geometry.coordinates.length > 1,
-      `transport.${agency}: geometría inválida`
-    );
-    expect(Boolean(feature.properties?.agency_name), `transport.${agency}: sin agency_name`);
-    expect(Boolean(feature.properties?.color), `transport.${agency}: sin color`);
-  }
-}
-
 expect(metroStations.length === meta.counts.metroStations, 'metroStations: conteo distinto');
 expect(metrobusStations.length === meta.counts.metrobusStations, 'metrobusStations: conteo distinto');
-expect(mercados.length === meta.counts.mercados, 'mercados: conteo distinto');
 expect(msr.length === meta.counts.msr, 'msr: conteo distinto');
 expect(tianguis.length === meta.counts.tianguis, 'tianguis: conteo distinto');
 
@@ -94,16 +70,6 @@ validateCollection('metrobusStations', metrobusStations, [
   'lat',
   'lon'
 ]);
-validateCollection('mercados', mercados, [
-  'nombre',
-  'alcaldia',
-  'colonia',
-  'locales',
-  'superficie_m2',
-  'categoria',
-  'lat',
-  'lon'
-]);
 validateCollection('msr', msr, ['ruta', 'dia', 'oferentes', 'direccion', 'alcaldia', 'colonia']);
 validateCollection('tianguis', tianguis, [
   'alcaldia',
@@ -115,8 +81,62 @@ validateCollection('tianguis', tianguis, [
   'lon'
 ]);
 
+// Mercomuna: directorio de comercios que aceptan vales. La invariancia que
+// importa es que ningún registro declare coordenada sin saber su precisión, y
+// que los agrupados por CP nunca se confundan con ubicaciones exactas.
+expect(Array.isArray(mercomuna.comercios), 'mercomuna: comercios debe ser un arreglo');
+expect(Array.isArray(mercomuna.porCp), 'mercomuna: porCp debe ser un arreglo');
+expect(mercomuna.vigenteHasta === '2026-12-31', 'mercomuna: fecha límite de vales distinta');
+
+const mercomunaPrecisiones = ['exacta', 'cp', 'sin_ubicacion'];
+const mercomunaCpConCoordenada = new Set();
+for (const [index, comercio] of mercomuna.comercios.entries()) {
+  expect(typeof comercio.id === 'string' && comercio.id !== '', `mercomuna[${index}]: falta id`);
+  expect(
+    typeof comercio.nombre === 'string' && comercio.nombre !== '',
+    `mercomuna[${index}]: falta nombre`
+  );
+  expect(
+    mercomunaPrecisiones.includes(comercio.precision),
+    `mercomuna[${index}]: precision desconocida (${comercio.precision})`
+  );
+  expect(comercio.aceptaVales === true, `mercomuna[${index}]: aceptaVales distinto de true`);
+
+  const tieneCoordenada = hasCoordinates(comercio);
+  expect(
+    comercio.precision !== 'sin_ubicacion' || !tieneCoordenada,
+    `mercomuna[${index}]: sin_ubicacion con coordenadas`
+  );
+  expect(
+    comercio.precision === 'sin_ubicacion' || tieneCoordenada,
+    `mercomuna[${index}]: ubicado sin coordenadas`
+  );
+  expect(
+    comercio.imprecisa === (comercio.precision === 'cp'),
+    `mercomuna[${index}]: imprecisa no coincide con precision`
+  );
+  expect(
+    comercio.idsEstrato === null || comercio.precision === 'exacta',
+    `mercomuna[${index}]: idsEstrato sin ubicación exacta`
+  );
+
+  if (comercio.precision === 'cp') mercomunaCpConCoordenada.add(comercio.cp);
+}
+
+expect(
+  mercomuna.porCp.length === mercomunaCpConCoordenada.size,
+  'mercomuna: porCp no cubre todos los CP con comercios aproximados'
+);
+for (const [index, entry] of mercomuna.porCp.entries()) {
+  expect(hasCoordinates(entry), `mercomuna.porCp[${index}]: coordenadas inválidas`);
+  expect(entry.comercios > 0, `mercomuna.porCp[${index}]: sin comercios`);
+  expect(
+    entry.comerciosAlimentos <= entry.comercios,
+    `mercomuna.porCp[${index}]: alimentos mayor que el total`
+  );
+}
+
 for (const [name, items] of [
-  ['mercados', mercados],
   ['msr', msr],
   ['tianguis', tianguis]
 ]) {

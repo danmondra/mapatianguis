@@ -14,17 +14,14 @@ export const API_ROUTES = Object.freeze({
   },
   commerce: {
     directory: `${API_PREFIX}/commerce/directory`,
-    mercados: `${API_PREFIX}/commerce/mercados`,
     msr: `${API_PREFIX}/commerce/msr`,
-    tianguis: `${API_PREFIX}/commerce/tianguis`
+    tianguis: `${API_PREFIX}/commerce/tianguis`,
+    mercomuna: `${API_PREFIX}/commerce/mercomuna`
   },
   mobility: {
     network: `${API_PREFIX}/mobility/network`,
     metroStations: `${API_PREFIX}/mobility/stations/metro`,
     metrobusStations: `${API_PREFIX}/mobility/stations/metrobus`
-  },
-  routing: {
-    plan: `${API_PREFIX}/routing/plan`
   }
 });
 
@@ -43,63 +40,49 @@ export const DAY_NAMES = Object.freeze([
   'SABADO'
 ]);
 
-export const AGENCIES = Object.freeze(['METRO', 'MB', 'TROLE', 'CBB', 'RTP', 'TL', 'CC']);
-
-export const AGENCY_LABELS = Object.freeze({
-  METRO: 'Metro (Líneas 1-12)',
-  MB: 'Metrobús (L1-L7)',
-  TROLE: 'Trolebús',
-  CBB: 'Cablebús',
-  RTP: 'RTP Pasajeros',
-  TL: 'Tren Ligero',
-  CC: 'Corredores Concesionados'
-});
-
-export const AGENCY_BADGES = Object.freeze({
-  METRO: { text: 'M', color: '#ef4444' },
-  MB: { text: 'MB', color: '#ec4899' },
-  TROLE: { text: 'TE', color: '#10b981' },
-  CBB: { text: 'CB', color: '#06b6d4' },
-  RTP: { text: 'RTP', color: '#15803d' },
-  TL: { text: 'TL', color: '#3b82f6' },
-  CC: { text: 'CC', color: '#8e24aa' }
-});
-
-export const RTPONKY_URL = 'https://rtponky.lat/';
+/** Semana en orden de calendario, de lunes a domingo. */
+export const WEEK_DAYS = Object.freeze([
+  { value: 'LUNES', short: 'Lun', label: 'Lunes' },
+  { value: 'MARTES', short: 'Mar', label: 'Martes' },
+  { value: 'MIERCOLES', short: 'Mié', label: 'Miércoles' },
+  { value: 'JUEVES', short: 'Jue', label: 'Jueves' },
+  { value: 'VIERNES', short: 'Vie', label: 'Viernes' },
+  { value: 'SABADO', short: 'Sáb', label: 'Sábado' },
+  { value: 'DOMINGO', short: 'Dom', label: 'Domingo' }
+]);
 
 export const LAYER_KEYS = Object.freeze([
   'zmvm',
   'alcaldias',
-  'metro',
-  'metrobus',
-  'trolebus',
-  'cablebus',
-  'rtp',
-  'tren',
-  'concesionado',
   'metro_icons',
   'metrobus_icons',
-  'mercados',
   'tianguis',
-  'msr'
+  'msr',
+  'mercomuna'
 ]);
 
+/**
+ * Visibilidad inicial. `mercomuna` arranca apagada: es una capa opcional y
+ * pesada (8,798 comercios), se enciende desde su chip.
+ */
 export const DEFAULT_LAYER_VISIBILITY = Object.freeze({
   zmvm: true,
   alcaldias: true,
-  metro: true,
-  metrobus: true,
-  trolebus: true,
-  cablebus: true,
-  rtp: true,
-  tren: true,
-  concesionado: true,
   metro_icons: true,
   metrobus_icons: true,
-  mercados: true,
   tianguis: true,
-  msr: true
+  msr: true,
+  mercomuna: false
 });
+
+/** Zoom mínimo para dibujar las estaciones de transporte. */
+export const STATION_MIN_ZOOM = 14;
+
+/**
+ * Zoom mínimo de la capa Mercomuna. Con 8,798 puntos no se dibujan de lejos:
+ * se encienden al acercarse, ya con el chip activo.
+ */
+export const MERCOMUNA_MIN_ZOOM = 13;
 
 /**
  * @param {string} value

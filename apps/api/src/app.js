@@ -9,7 +9,6 @@ import { readData } from './data/store.js';
 import { commerceRouter } from './domains/commerce/commerce.routes.js';
 import { geoRouter } from './domains/geo/geo.routes.js';
 import { mobilityRouter } from './domains/mobility/mobility.routes.js';
-import { routingRouter } from './domains/routing/routing.routes.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WEB_DIST = path.resolve(HERE, '../../web/dist');
@@ -55,7 +54,6 @@ export function createApp() {
   app.use(`${API_PREFIX}/geo`, geoRouter);
   app.use(`${API_PREFIX}/commerce`, commerceRouter);
   app.use(`${API_PREFIX}/mobility`, mobilityRouter);
-  app.use(`${API_PREFIX}/routing`, routingRouter);
 
   app.use(API_PREFIX, (_request, response) => {
     response.status(404).json({ error: 'Endpoint no encontrado' });

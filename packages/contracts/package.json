@@ -8,7 +8,6 @@
     ".": "./src/index.js",
     "./commerce": "./src/commerce.js",
     "./geo": "./src/geo.js",
-    "./mobility": "./src/mobility.js",
-    "./routing": "./src/routing.js"
+    "./mobility": "./src/mobility.js"
   }
 }

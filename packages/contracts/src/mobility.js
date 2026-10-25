@@ -1,29 +1,6 @@
 /**
  * Contrato del dominio Movilidad Integrada.
  *
- * @typedef {Object} TransportProperties
- * @property {string} agency
- * @property {string} agency_name
- * @property {string} route_id
- * @property {string} route_short
- * @property {string} route_long
- * @property {string} headsign
- * @property {string} color
- * @property {number} weight
- * @property {number} opacity
- *
- * @typedef {Object} TransportFeature
- * @property {'Feature'} type
- * @property {TransportProperties} properties
- * @property {{ type: 'LineString', coordinates: number[][] }} geometry
- *
- * @typedef {Object} TransportLayer
- * @property {string} name
- * @property {string} color
- * @property {TransportFeature[]} features
- *
- * @typedef {Record<string, TransportLayer>} TransportNetwork
- *
  * @typedef {Object} MetroStation
  * @property {string} nombre
  * @property {string} linea
@@ -43,7 +20,6 @@
  * @property {number} lon
  *
  * @typedef {Object} MobilityNetwork
- * @property {TransportNetwork} transport
  * @property {MetroStation[]} metroStations
  * @property {MetrobusStation[]} metrobusStations
  */
@@ -72,41 +48,26 @@ export function getDistanceMeters(lat1, lon1, lat2, lon2) {
 }
 
 /**
- * @param {MetroStation[]} stations
+ * Estaciones más cercanas a un punto, para dar contexto sin navegación.
+ * @template {{ lat: number, lon: number }} T
+ * @param {T[]} stations
  * @param {number} lat
  * @param {number} lon
- * @returns {MetroStation|null}
+ * @param {{ limit?: number, maxDistanceMeters?: number }} [options]
+ * @returns {{ station: T, distanceMeters: number }[]}
  */
-export function findClosestMetro(stations, lat, lon) {
-  let nearest = null;
-  let minDistance = Number.POSITIVE_INFINITY;
-  for (const station of stations) {
-    const distance = getDistanceMeters(lat, lon, station.lat, station.lon);
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearest = station;
-    }
-  }
-  return nearest;
-}
-
-/**
- * Tarifa mostrada en la ficha de detalle de una ruta.
- * @param {string} agency
- * @returns {string}
- */
-export function fareLabel(agency) {
-  if (agency === 'METRO') return '$5.00';
-  if (agency === 'MB') return '$6.00';
-  if (agency === 'CC') return 'Por tramo';
-  return '$2.00-$4.00';
-}
-
-/**
- * Forma de pago mostrada en la ficha de detalle de una ruta.
- * @param {string} agency
- * @returns {string}
- */
-export function paymentLabel(agency) {
-  return agency === 'CC' ? 'Efectivo / Mi' : 'Tarjeta MI';
+export function findNearbyStations(
+  stations,
+  lat,
+  lon,
+  { limit = 2, maxDistanceMeters = 1000 } = {}
+) {
+  return stations
+    .map((station) => ({
+      station,
+      distanceMeters: getDistanceMeters(lat, lon, station.lat, station.lon)
+    }))
+    .filter(({ distanceMeters }) => distanceMeters <= maxDistanceMeters)
+    .sort((a, b) => a.distanceMeters - b.distanceMeters)
+    .slice(0, limit);
 }

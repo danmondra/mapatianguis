@@ -27,15 +27,3 @@ export async function requestJson(path, options = {}) {
 
   return response.json();
 }
-
-/**
- * @param {string} path
- * @param {unknown} body
- * @returns {Promise<any>}
- */
-export function postJson(path, body) {
-  return requestJson(path, {
-    method: 'POST',
-    body: JSON.stringify(body)
-  });
-}

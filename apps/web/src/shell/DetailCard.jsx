@@ -1,20 +1,13 @@
-import {
-  fareLabel,
-  paymentLabel
-} from '@mapatianguis/contracts/mobility';
-import { formatSurface } from '@mapatianguis/contracts/commerce';
-import { RTPONKY_URL } from '@mapatianguis/contracts';
-
 /**
- * Ficha de detalle única para comercio y transporte.
- * Recibe una selección normalizada: { kind, data, anchor? }.
+ * Ficha informativa de tianguis, MSR y estaciones de referencia.
+ * Recibe una selección normalizada: { kind, data }.
  * @param {{
- *   selection: { kind: string, data: any, anchor?: { lat: number, lon: number } } | null,
- *   onClose: () => void,
- *   onGoTo: (target: { label: string, lat: number, lon: number }) => void
+ *   selection: { kind: string, data: any } | null,
+ *   nearbyStations?: { station: { nombre: string, linea: string, mode: string }, distanceMeters: number }[],
+ *   onClose: () => void
  * }} props
  */
-export function DetailCard({ selection, onClose, onGoTo }) {
+export function DetailCard({ selection, nearbyStations = [], onClose }) {
   if (!selection) return null;
 
   const view = describeSelection(selection);
@@ -71,87 +64,60 @@ export function DetailCard({ selection, onClose, onGoTo }) {
         </div>
       </div>
 
-      <div
-        style={{
-          background: '#ffffff',
-          padding: '8px',
-          borderRadius: '8px',
-          border: '1px solid #dbeae8',
-          marginBottom: '8px',
-          fontSize: '0.75rem'
-        }}
-      >
-        <div style={{ fontWeight: 700, color: 'var(--cdmx-green-dark)', marginBottom: '2px' }}>
-          {view.connectionTitle}
-        </div>
-        <div id="panel-conn" style={{ color: '#334155' }}>
-          {view.connection}
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', gap: '6px' }}>
-        <button
-          type="button"
-          onClick={() => onGoTo(view.target)}
+      {view.connection && (
+        <div
           style={{
-            flex: 1,
-            background: '#0f5953',
-            color: '#fff',
-            border: 'none',
-            padding: '7px',
-            borderRadius: '6px',
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            cursor: 'pointer'
+            background: '#ffffff',
+            padding: '8px',
+            borderRadius: '8px',
+            border: '1px solid #dbeae8',
+            marginBottom: '8px',
+            fontSize: '0.75rem'
           }}
         >
-          🎯 Ir hacia aquí
-        </button>
-        <a
-          href={RTPONKY_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="rtponky-link-btn"
-          style={{ flex: 1 }}
-          id="panel-rtponky-btn"
+          <div style={{ fontWeight: 700, color: 'var(--cdmx-green-dark)', marginBottom: '2px' }}>
+            {view.connectionTitle}
+          </div>
+          <div id="panel-conn" style={{ color: '#334155' }}>
+            {view.connection}
+          </div>
+        </div>
+      )}
+
+      {nearbyStations.length > 0 && (
+        <div
+          style={{
+            background: '#f8fafc',
+            padding: '8px',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0',
+            fontSize: '0.75rem'
+          }}
         >
-          <span>RTPonky ↗</span>
-        </a>
-      </div>
+          <div style={{ fontWeight: 700, color: '#0f5953', marginBottom: '4px' }}>
+            🚇 Estaciones cercanas
+          </div>
+          <ul style={{ margin: 0, paddingLeft: '16px', color: '#334155' }}>
+            {nearbyStations.map(({ station, distanceMeters }, index) => (
+              <li key={`${station.mode}-${station.nombre}-${index}`}>
+                <b>
+                  {station.mode} {station.nombre}
+                </b>
+                {station.linea
+                  ? ` · ${station.mode === 'Metro' ? `Línea ${station.linea}` : station.linea}`
+                  : ''}{' '}
+                · {Math.round(distanceMeters)} m
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
 
 function describeSelection(selection) {
   const { data } = selection;
-
-  if (selection.kind === 'mercado') {
-    return {
-      tag: 'MERCADO PÚBLICO',
-      tagColor: '#d97706',
-      name: `Mercado ${data.nombre}`,
-      sub: `${data.alcaldia} · ${data.colonia}`,
-      stat1: data.locales,
-      label1: 'Locales',
-      stat2: formatSurface(data.superficie_m2),
-      label2: 'Superficie',
-      connectionTitle: '🚌 Conexión de Movilidad:',
-      connection: (
-        <>
-          🚇 Metro / Metrobús conectado a pie.
-          <br />
-          <span style={{ color: '#0f5953', fontWeight: 700 }}>
-            Tarifa oficial MI: $5.00 - $6.00 MXN.
-          </span>
-        </>
-      ),
-      target: {
-        label: `Mercado ${data.nombre}`,
-        lat: data.lat,
-        lon: data.lon
-      }
-    };
-  }
 
   if (selection.kind === 'tianguis') {
     return {
@@ -163,17 +129,8 @@ function describeSelection(selection) {
       label1: 'Día',
       stat2: data.horario,
       label2: 'Horario',
-      connectionTitle: '🚌 Conexión de Movilidad:',
-      connection: (
-        <>
-          <b>Vía cerrada:</b> <i>{data.ubicacion}</i>
-        </>
-      ),
-      target: {
-        label: `Tianguis ${data.colonia}`,
-        lat: data.lat,
-        lon: data.lon
-      }
+      connectionTitle: '📍 Dónde se instala:',
+      connection: <i>{data.ubicacion}</i>
     };
   }
 
@@ -187,73 +144,88 @@ function describeSelection(selection) {
       label1: 'Día en esta sede',
       stat2: data.oferentes,
       label2: 'Oferentes',
-      connectionTitle: '🚌 Conexión de Movilidad:',
-      connection: (
-        <>
-          <b>Ruta itinerante:</b> Se traslada de colonia a lo largo de la semana.
-        </>
-      ),
-      target: {
-        label: `MSR ${data.ruta}`,
-        lat: data.lat,
-        lon: data.lon
-      }
+      connectionTitle: '🔁 Ruta itinerante:',
+      connection: 'Se traslada de colonia a lo largo de la semana.'
+    };
+  }
+
+  if (selection.kind === 'mercomuna') {
+    return {
+      tag: 'ACEPTA VALES MERCOMUNA',
+      tagColor: '#b45309',
+      name: data.nombre,
+      sub: `${data.alcaldia}${data.cp ? ` · CP ${data.cp}` : ''} · ${data.calle}`,
+      stat1: data.categoria ?? data.giro,
+      label1: data.categoria ? 'Categoría' : 'Giro',
+      stat2: data.alimentos ? 'Sí' : 'No',
+      label2: 'Alimentos',
+      connectionTitle: '💳 Vales Mercomuna:',
+      connection: `Aquí se pueden usar los vales hasta el ${formatDate(data.vigenteHasta)}.`
+    };
+  }
+
+  if (selection.kind === 'mercomuna_cp') {
+    return {
+      tag: 'VALES MERCOMUNA POR CP',
+      tagColor: '#b45309',
+      name: `CP ${data.cp}`,
+      sub: data.alcaldia,
+      stat1: data.comercios,
+      label1: 'Comercios con vales',
+      stat2: data.comerciosAlimentos,
+      label2: 'De alimentos',
+      connectionTitle: 'ℹ️ Ubicación aproximada:',
+      connection:
+        'Estos comercios solo tienen publicado su código postal, así que se agrupan ' +
+        'en el centroide del CP. No indica la dirección exacta de cada uno.'
     };
   }
 
   if (selection.kind === 'metro') {
     return {
-      tag: 'ESTACIÓN METRO CDMX',
+      tag: 'ESTACIÓN DE METRO',
       tagColor: data.color,
-      name: `Estación ${data.nombre}`,
-      sub: `Línea ${data.linea} · Alcaldía ${data.alcaldia}`,
-      stat1: '$5.00 MXN',
-      label1: 'Tarifa Oficial',
+      name: stationName(data.nombre),
+      sub: `Alcaldía ${data.alcaldia}`,
+      stat1: `Línea ${data.linea}`,
+      label1: 'Línea',
       stat2: data.tipo,
       label2: 'Tipo',
-      connectionTitle: '🚌 Conexión de Movilidad:',
-      connection: (
-        <>
-          🚇 Estación de la red primaria que conecta con mercados y tianguis
-          barriales.
-        </>
-      ),
-      target: {
-        label: `Estación ${data.nombre}`,
-        lat: data.lat,
-        lon: data.lon
-      }
+      connectionTitle: '🧭 Punto de referencia:',
+      connection: 'Estación cercana a los tianguis de la zona.'
     };
   }
 
-  if (selection.kind === 'transport') {
+  if (selection.kind === 'metrobus') {
     return {
-      tag: data.agency_name,
-      tagColor: data.color,
-      name: `${data.route_short ?? ''} ${data.route_long ?? ''}`.trim(),
-      sub: `Destino: ${data.headsign || 'Servicio Concesionado/Red'}`,
-      stat1: fareLabel(data.agency),
-      label1: 'Tarifa',
-      stat2: paymentLabel(data.agency),
-      label2: 'Pago',
-      connectionTitle: '🚌 Conexión de Movilidad:',
-      connection: (
-        <>
-          <b>Corredor / Ruta:</b> Conexión de transporte que abastece y alimenta
-          a la zona comercial.
-        </>
-      ),
-      target: selection.anchor
-        ? {
-            label:
-              `${data.route_short ?? ''} ${data.route_long ?? ''}`.trim() ||
-              data.agency_name,
-            lat: selection.anchor.lat,
-            lon: selection.anchor.lon
-          }
-        : null
+      tag: 'ESTACIÓN DE METROBÚS',
+      tagColor: '#d81b60',
+      name: stationName(data.nombre),
+      sub: `Alcaldía ${data.alcaldia}`,
+      stat1: data.linea,
+      label1: 'Línea',
+      stat2: 'Metrobús',
+      label2: 'Sistema',
+      connectionTitle: '🧭 Punto de referencia:',
+      connection: 'Estación cercana a los tianguis de la zona.'
     };
   }
 
   return null;
+}
+
+function stationName(name) {
+  return name.startsWith('Estación ') ? name : `Estación ${name}`;
+}
+
+/** "2026-12-31" -> "31 de diciembre de 2026" */
+function formatDate(isoDate) {
+  if (!isoDate) return '';
+  const [year, month, day] = String(isoDate).split('-').map(Number);
+  if (!year || !month || !day) return isoDate;
+  const meses = [
+    'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+    'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'
+  ];
+  return `${day} de ${meses[month - 1]} de ${year}`;
 }

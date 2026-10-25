@@ -1,22 +1,16 @@
 import L from 'leaflet';
 import { useEffect } from 'react';
+import { STATION_MIN_ZOOM } from '@mapatianguis/contracts';
 import { useMapContext } from '../../map/MapProvider.jsx';
 
-const AGENCY_LAYER_KEYS = {
-  METRO: 'metro',
-  MB: 'metrobus',
-  TROLE: 'trolebus',
-  CBB: 'cablebus',
-  RTP: 'rtp',
-  TL: 'tren',
-  CC: 'concesionado'
-};
+const STATION_OPACITY = 0.55;
 
 /**
- * Trazos de la Red MI, estaciones de Metro y Metrobús.
+ * Estaciones de Metro y Metrobús. Se dibujan tenues y solo a partir del zoom
+ * definido en `STATION_MIN_ZOOM` para no saturar la vista metropolitana.
  * @param {{
  *   data: import('@mapatianguis/contracts/mobility').MobilityNetwork,
- *   onSelect: (selection: { kind: 'metro'|'transport', data: any }) => void
+ *   onSelect: (selection: { kind: 'metro'|'metrobus', data: any }) => void
  * }} props
  */
 export function MobilityLayers({ data, onSelect }) {
@@ -25,48 +19,14 @@ export function MobilityLayers({ data, onSelect }) {
   useEffect(() => {
     if (!data) return undefined;
 
-    const groups = Object.fromEntries(
-      Object.values(AGENCY_LAYER_KEYS).map((key) => [key, L.featureGroup()])
-    );
     const metroIcons = L.featureGroup();
     const metrobusIcons = L.featureGroup();
 
-    for (const [agency, layerData] of Object.entries(data.transport ?? {})) {
-      const key = AGENCY_LAYER_KEYS[agency];
-      const group = groups[key];
-      if (!group) continue;
-
-      for (const feature of layerData.features ?? []) {
-        const properties = feature.properties;
-        const polyline = L.polyline(
-          feature.geometry.coordinates.map(([lon, lat]) => [lat, lon]),
-          {
-            color: properties.color,
-            weight: properties.weight,
-            opacity: 0.9
-          }
-        );
-
-        polyline.bindPopup(`
-          <div style="font-weight:800; color:${properties.color}; font-size:0.92rem; margin-bottom:2px;">
-            ${properties.agency_name}
-          </div>
-          <div style="font-size:0.75rem; color:#334155; margin-bottom:4px;">
-            Ruta: <b>${properties.route_short || ''} ${properties.route_long || ''}</b>
-          </div>
-          <div style="font-size:0.7rem; color:#64748b;">
-            ${properties.headsign || 'Servicio Concesionado / Red'}
-          </div>
-        `);
-
-        polyline.on('click', () => {
-          const [lon, lat] = feature.geometry.coordinates[0];
-          onSelect({ kind: 'transport', data: properties, anchor: { lat, lon } });
-        });
-
-        group.addLayer(polyline);
-      }
-    }
+    const fade = (marker) => {
+      marker.setOpacity(STATION_OPACITY);
+      marker.on('mouseover', () => marker.setOpacity(1));
+      marker.on('mouseout', () => marker.setOpacity(STATION_OPACITY));
+    };
 
     for (const station of data.metroStations ?? []) {
       const glyphHtml = station.has_glyph
@@ -84,23 +44,24 @@ export function MobilityLayers({ data, onSelect }) {
         iconAnchor: [11, 11]
       });
 
-      const marker = L.marker([station.lat, station.lon], { icon: customIcon });
+      const marker = L.marker([station.lat, station.lon], {
+        icon: customIcon,
+        opacity: STATION_OPACITY
+      });
       marker.bindPopup(`
         <div style="font-weight:800; color:${station.color}; font-size:0.92rem; margin-bottom:2px;">
           Metro ${station.nombre}
         </div>
-        <div style="font-size:0.75rem; color:#475569; margin-bottom:4px;">
+        <div style="font-size:0.75rem; color:#475569;">
           Línea ${station.linea} · ${station.tipo} · ${station.alcaldia}
         </div>
-        <span style="background:#fee2e2; color:#991b1b; font-size:0.7rem; font-weight:700; padding:2px 6px; border-radius:4px;">
-          Tarifa: $5.00 MXN
-        </span>
       `);
 
       marker.on('click', () => {
         onSelect({ kind: 'metro', data: station });
       });
 
+      fade(marker);
       metroIcons.addLayer(marker);
     }
 
@@ -112,28 +73,31 @@ export function MobilityLayers({ data, onSelect }) {
         iconAnchor: [10, 10]
       });
 
-      const marker = L.marker([station.lat, station.lon], { icon: customIcon });
+      const marker = L.marker([station.lat, station.lon], {
+        icon: customIcon,
+        opacity: STATION_OPACITY
+      });
       marker.bindPopup(`
         <div style="font-weight:800; color:#d81b60; font-size:0.92rem; margin-bottom:2px;">
           Metrobús ${station.nombre}
         </div>
-        <div style="font-size:0.75rem; color:#475569; margin-bottom:4px;">
+        <div style="font-size:0.75rem; color:#475569;">
           ${station.linea} · Alcaldía ${station.alcaldia}
         </div>
-        <span style="background:#fce7f3; color:#9d174d; font-size:0.7rem; font-weight:700; padding:2px 6px; border-radius:4px;">
-          Tarifa: $6.00 MXN
-        </span>
       `);
 
+      marker.on('click', () => {
+        onSelect({ kind: 'metrobus', data: station });
+      });
+
+      fade(marker);
       metrobusIcons.addLayer(marker);
     }
 
-    for (const [key, layer] of Object.entries(groups)) registerLayer(key, layer);
-    registerLayer('metro_icons', metroIcons);
-    registerLayer('metrobus_icons', metrobusIcons);
+    registerLayer('metro_icons', metroIcons, { minZoom: STATION_MIN_ZOOM });
+    registerLayer('metrobus_icons', metrobusIcons, { minZoom: STATION_MIN_ZOOM });
 
     return () => {
-      for (const [key, layer] of Object.entries(groups)) unregisterLayer(key, layer);
       unregisterLayer('metro_icons', metroIcons);
       unregisterLayer('metrobus_icons', metrobusIcons);
     };

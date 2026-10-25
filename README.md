@@ -1,6 +1,6 @@
 # Mapatianguis
 
-Cliente React + API Node para el mapa de **comercio popular, barrial y movilidad integrada de la CDMX** (Chilangatón 2026 · Reto 1). Es la migración del visor autocontenido de `tianuisCDMX` a una aplicación con datos servidos por API y estructura por dominios.
+Cliente React + API Node para un mapa **informativo de tianguis y comercio popular de la CDMX** (Chilangatón 2026 · Reto 1). No es una app de navegación: sirve para descubrir qué tianguis hay, cuándo abren y qué estaciones de transporte tienen cerca. Es la migración del visor autocontenido de `tianuisCDMX` a una aplicación con datos servidos por API y estructura por dominios.
 
 ## Inicio rápido
 
@@ -40,23 +40,24 @@ npm run verify:data
 | `npm run verify:data` | Valida conteos, campos y geometrías |
 | `npm run migrate:data` | Extrae datos/CSS/fuentes del HTML legado |
 | `npm run migrate:data -- ../ruta/mapa.html` | Migra desde otro HTML |
+| `npm run build:mercomuna` | Genera `data/commerce/mercomuna.json` desde el cruce de Incertianguis |
+| `npm run build:mercomuna -- --source=<ruta.csv>` | Usa otro CSV de entrada |
 
 ## Arquitectura
 
 ```text
 apps/
   web/                 React 19 + Vite + Leaflet
-    src/app/           shell: composición, estado de selección y ruteo
+    src/app/           shell: composición y estado de selección
     src/map/           MapProvider, registro de capas, geolocalización
     src/shell/         sidebar, FABs, ficha de detalle, accesos rápidos
     src/domains/
       geo/             alcaldías y ZMVM
-      commerce/        mercados, MSR, tianguis, buscador y chips
-      mobility/        Red MI, estaciones y control de líneas
-      routing/         planificador, resultados y trazo de ruta
+      commerce/        MSR, tianguis, buscador y chips
+      mobility/        estaciones Metro/Metrobús como referencia
     src/shared/        HTTP y primitivas de UI
   api/                 Node + Express
-    src/domains/       geo | commerce | mobility | routing
+    src/domains/       geo | commerce | mobility
                          (routes + service por dominio)
     src/data/          lector cacheado de data/
     src/core/          errores HTTP
@@ -66,6 +67,7 @@ data/
   geo/ mobility/ commerce/   artefactos migrados, un archivo por dominio
 scripts/
   migrate-legacy-data.mjs    extracción desde el visor legado
+  build-mercomuna.mjs        CSV de Incertianguis -> commerce/mercomuna.json
   verify-data.mjs            validación del contrato de datos
   dev.mjs                    arranque paralelo
 ```
@@ -77,7 +79,6 @@ Cada dominio es dueño de su **cliente API**, sus **capas de Leaflet** y sus **c
 Dependencias permitidas en el backend:
 
 ```text
-routing -> commerce, mobility
 commerce, mobility, geo -> data store
 ```
 
@@ -95,20 +96,13 @@ Se conserva **Leaflet** y el lenguaje visual original. React es dueño del estad
 | GET | `/api/v1/meta` | conteos, checksum y endpoints |
 | GET | `/api/v1/geo/alcaldias` | GeoJSON de 16 alcaldías |
 | GET | `/api/v1/geo/zmvm` | GeoJSON de 60 municipios conurbados |
-| GET | `/api/v1/mobility/network` | trazos MI + estaciones Metro/Metrobús |
+| GET | `/api/v1/mobility/network` | estaciones Metro/Metrobús |
 | GET | `/api/v1/mobility/stations/metro` | 195 estaciones |
 | GET | `/api/v1/mobility/stations/metrobus` | 324 estaciones |
-| GET | `/api/v1/commerce/directory` | mercados + MSR + tianguis |
-| GET | `/api/v1/commerce/mercados?q=&alcaldia=` | mercados filtrados |
+| GET | `/api/v1/commerce/directory` | MSR + tianguis |
 | GET | `/api/v1/commerce/msr` | mercados sobre ruedas |
 | GET | `/api/v1/commerce/tianguis?day=&alcaldia=&q=` | tianguis filtrados |
-| POST | `/api/v1/routing/plan` | plan de ruta |
-
-```bash
-curl -X POST http://localhost:3001/api/v1/routing/plan \
-  -H 'content-type: application/json' \
-  -d '{"from":"Zócalo","to":"Mercado Jamaica"}'
-```
+| GET | `/api/v1/commerce/mercomuna?q=&alimentos=1` | comercios que aceptan vales Mercomuna |
 
 ## Datos
 
@@ -118,21 +112,65 @@ Los artefactos provienen del visor legado y se congelaron con checksum para pode
 {
   "alcaldias": 16,
   "zmvm": 60,
-  "transportLines": 205,
   "metroStations": 195,
   "metrobusStations": 324,
-  "mercados": 329,
   "msr": 51,
   "tianguis": 1367
 }
 ```
 
+### Vales Mercomuna
+
+Capa opcional (chip **💳 Vales Mercomuna**, apagada por defecto) con los comercios
+donde se pueden usar los vales del programa Mercomuna, vigentes hasta el
+**31 de diciembre de 2026**.
+
+Viene del trabajo del equipo *Principio de Incertianguis* (Chilangatón 2026, reto
+"Comercio popular y barrial"): `incertianguis/data/processed/mercomuna.csv`
+— el directorio público de `comercios-mercomuna.cdmx.gob.mx` geocodificado
+contra el DENUE. `scripts/build-mercomuna.mjs` lo convierte en
+`data/commerce/mercomuna.json` (3 MB, ~320 KB con gzip).
+
+```json
+{
+  "resumen": {
+    "total": 8798,
+    "alimentos": 3858,
+    "precisos": 2029,
+    "aproximados": 6755,
+    "sinUbicacion": 14,
+    "porCp": 691
+  }
+}
+```
+
+La capa respeta la precisión de origen, porque solo el **23%** de los comercios
+tiene ubicación exacta:
+
+| `precision` | Qué se dibuja |
+| --- | --- |
+| `exacta` (2,029) | chincheta propia del comercio, visible desde zoom 13 |
+| `cp` (6,755) | **un círculo por código postal** (691), con el número de comercios; son centroides DENUE compartidos, no direcciones |
+| `sin_ubicacion` (14) | nada; solo cuentan en el chip |
+
+Nunca se pintan los centroides de CP como si fueran ubicaciones de comercio:
+`imprecisa: true` lo deja explícito en el contrato y la ficha de detalle lo
+advierte. La capa pesada se descarga solo cuando el chip se enciende por primera
+vez.
+
 Checksum del bundle legado: `3ab4cdb9614ff79410005bf886306236155c5ba99aa927fc44d1e6fff6c9d690`.
+
+Los **329 mercados públicos** del visor legado se excluyeron del producto: no se sirven por API ni se dibujan en el mapa. Se conservan los tianguis y las rutas de mercados sobre ruedas (MSR).
+
+También se retiraron los **trazos de la Red MI**. Solo se conservan las estaciones de Metro y Metrobús: se dibujan tenues y aparecen al llegar a zoom 14.
 
 El runtime ya **no ejecuta Python**. La extracción desde el HTML legado es un paso de migración, no una dependencia de producción.
 
 ## Estado
 
 - Cliente y API funcionando con paridad visual y funcional respecto al visor legado.
-- Tests de datos, ruteo y endpoints: `npm test`.
-- Pendientes principales: portar el ETL a Node, conectar el motor real de ruteo y definir despliegue. Ver [`MIGRACION.md`](./MIGRACION.md).
+- Calendario semanal de tianguis con el conteo de abiertos por día, opción “Todos” y el día actual seleccionado por defecto.
+- Tests de datos y endpoints: `npm test`.
+- Capa de vales Mercomuna con chip apagado por defecto, respetando la precisión
+  de geocodificación de origen.
+- Pendientes principales: portar el ETL a Node y definir despliegue. Ver [`MIGRACION.md`](./MIGRACION.md).

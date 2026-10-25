@@ -63,13 +63,8 @@ async function main() {
   const counts = {
     alcaldias: data.alcaldias?.features?.length ?? 0,
     zmvm: data.zmvm?.features?.length ?? 0,
-    transportLines: Object.values(data.transport ?? {}).reduce(
-      (total, layer) => total + (layer.features?.length ?? 0),
-      0
-    ),
     metroStations: data.metro_stations?.length ?? 0,
     metrobusStations: data.metrobus_stations?.length ?? 0,
-    mercados: data.mercados?.length ?? 0,
     msr: data.msr?.length ?? 0,
     tianguis: data.tianguis?.length ?? 0
   };
@@ -77,10 +72,10 @@ async function main() {
   console.log('Escribiendo datos por dominio...');
   await writeJson('data/geo/alcaldias.json', data.alcaldias);
   await writeJson('data/geo/zmvm.json', data.zmvm);
-  await writeJson('data/mobility/transport.json', data.transport);
+  // El legado incluye los trazos de la Red MI; el producto solo publica estaciones.
   await writeJson('data/mobility/metro-stations.json', data.metro_stations ?? []);
   await writeJson('data/mobility/metrobus-stations.json', data.metrobus_stations ?? []);
-  await writeJson('data/commerce/mercados.json', data.mercados ?? []);
+  // El legado incluye 329 mercados públicos; el producto ya no los publica.
   await writeJson('data/commerce/msr.json', data.msr ?? []);
   await writeJson('data/commerce/tianguis.json', data.tianguis ?? []);
   await writeJson('data/meta.json', {

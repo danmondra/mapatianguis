@@ -7,7 +7,7 @@ export function Sidebar({ collapsed, onToggle, children }) {
     <aside id="sidebar" className={collapsed ? 'collapsed' : ''}>
       <div className="sidebar-header">
         <div>
-          <div className="sidebar-brand-title">Movilidad y Comercio CDMX</div>
+          <div className="sidebar-brand-title">Tianguis CDMX</div>
           <div className="sidebar-brand-sub">Chilangotón 2026 · Reto 1</div>
         </div>
         <button

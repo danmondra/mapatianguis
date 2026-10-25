@@ -2,4 +2,3 @@ export * from './constants.js';
 export * as commerce from './commerce.js';
 export * as geo from './geo.js';
 export * as mobility from './mobility.js';
-export * as routing from './routing.js';

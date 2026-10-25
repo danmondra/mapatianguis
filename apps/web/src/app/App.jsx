@@ -1,23 +1,28 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { getTodayName, MAP_CENTER } from '@mapatianguis/contracts';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getTodayName, WEEK_DAYS } from '@mapatianguis/contracts';
+import { tianguisMatchesDay } from '@mapatianguis/contracts/commerce';
+import { findNearbyStations } from '@mapatianguis/contracts/mobility';
 import { MapProvider, useMapContext } from '../map/MapProvider.jsx';
 import { useUserLocation } from '../map/useUserLocation.js';
 import { Sidebar } from '../shell/Sidebar.jsx';
 import { MapFabStack } from '../shell/MapFabStack.jsx';
 import { QuickAccess } from '../shell/QuickAccess.jsx';
 import { DetailCard } from '../shell/DetailCard.jsx';
+import { TianguisPreview } from '../shell/TianguisPreview.jsx';
 import { GeoLayers } from '../domains/geo/GeoLayers.jsx';
 import { fetchGeoLayers } from '../domains/geo/api.js';
 import { CommerceLayers } from '../domains/commerce/CommerceLayers.jsx';
 import { CommerceSearch } from '../domains/commerce/CommerceSearch.jsx';
 import { CommerceControls } from '../domains/commerce/CommerceControls.jsx';
-import { fetchCommerceDirectory } from '../domains/commerce/api.js';
+import { fetchCommerceDirectory, fetchMercomuna } from '../domains/commerce/api.js';
+import { MercomunaLayers } from '../domains/commerce/MercomunaLayers.jsx';
 import { MobilityLayers } from '../domains/mobility/MobilityLayers.jsx';
 import { MobilitySection } from '../domains/mobility/MobilitySection.jsx';
 import { fetchMobilityNetwork } from '../domains/mobility/api.js';
-import { RoutePlanner } from '../domains/routing/RoutePlanner.jsx';
-import { RoutingLayers } from '../domains/routing/RoutingLayers.jsx';
-import { fetchRoutePlan } from '../domains/routing/api.js';
+
+const TIANGUIS_PREVIEW_ZOOM = 16;
+/** Mitad del panel derecho: deja el marcador en el centro del área visible. */
+const PREVIEW_PANEL_OFFSET_PX = 180;
 
 export default function App() {
   return (
@@ -28,25 +33,19 @@ export default function App() {
 }
 
 function AppShell() {
-  const { toggleBaseMap, resetView, refreshSize } = useMapContext();
+  const { map, toggleBaseMap, resetView, refreshSize, visibleLayers, setLayerVisible } =
+    useMapContext();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [data, setData] = useState({ geo: null, mobility: null, commerce: null });
+  const [mercomuna, setMercomuna] = useState(null);
+  const [mercomunaError, setMercomunaError] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [selected, setSelected] = useState(null);
-  const [routeFrom, setRouteFrom] = useState('Mi ubicación');
-  const [routeTo, setRouteTo] = useState('Mercado Jamaica');
-  const [routePlan, setRoutePlan] = useState(null);
-  const [routeLoading, setRouteLoading] = useState(false);
-  const [routeError, setRouteError] = useState(null);
-  const [userCoordinates, setUserCoordinates] = useState({
-    lat: MAP_CENTER.lat,
-    lon: MAP_CENTER.lng
-  });
+  const [selectedDay, setSelectedDay] = useState(() => getTodayName());
 
   const commerceMapRef = useRef(null);
-  const destinationRef = useRef(null);
-  const routeRequestRef = useRef(0);
+  const selectedDayRef = useRef(selectedDay);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +67,26 @@ function AppShell() {
     };
   }, []);
 
+  // La capa de vales es opcional: se pide solo la primera vez que se enciende.
+  useEffect(() => {
+    if (!visibleLayers.mercomuna || mercomuna) return undefined;
+
+    let cancelled = false;
+    setMercomunaError(null);
+
+    fetchMercomuna()
+      .then((directory) => {
+        if (!cancelled) setMercomuna(directory);
+      })
+      .catch((error) => {
+        if (!cancelled) setMercomunaError(error.message);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [visibleLayers.mercomuna, mercomuna]);
+
   const openSidebar = useCallback(() => {
     setSidebarCollapsed(false);
     setTimeout(refreshSize, 300);
@@ -78,85 +97,105 @@ function AppShell() {
     setTimeout(refreshSize, 300);
   };
 
-  const handleLocation = useCallback((coordinates) => {
-    setUserCoordinates(coordinates);
-  }, []);
-  const { locate } = useUserLocation({ onLocation: handleLocation });
+  const { locate } = useUserLocation();
 
   const handleSelect = useCallback(
     (selection) => {
       setSelected(selection);
+
+      if (selection?.kind === 'tianguis') {
+        // La previsualización siempre muestra las estaciones de referencia.
+        setLayerVisible('metro_icons', true);
+        setLayerVisible('metrobus_icons', true);
+        return;
+      }
+
       openSidebar();
     },
-    [openSidebar]
+    [openSidebar, setLayerVisible]
   );
+
+  const handleCloseSelection = useCallback(() => setSelected(null), []);
+
+  // Al previsualizar un tianguis se hace zoom y se compensa el panel derecho.
+  useEffect(() => {
+    if (!map || selected?.kind !== 'tianguis') return;
+
+    const { lat, lon } = selected.data;
+    const offsetX = window.matchMedia('(max-width: 820px)').matches
+      ? 0
+      : PREVIEW_PANEL_OFFSET_PX;
+    const point = map.project([lat, lon], TIANGUIS_PREVIEW_ZOOM).add([offsetX, 0]);
+    const center = map.unproject(point, TIANGUIS_PREVIEW_ZOOM);
+
+    map.flyTo(center, TIANGUIS_PREVIEW_ZOOM, { duration: 0.8 });
+  }, [map, selected]);
 
   const handleCommerceReady = useCallback((api) => {
     commerceMapRef.current = api;
+    api?.setDayFilter(selectedDayRef.current);
   }, []);
 
   const handleSearch = (query) => {
-    commerceMapRef.current?.focusMercado(query);
+    commerceMapRef.current?.focusTianguis(query);
   };
 
-  const handleFilterToday = () => {
-    const today = getTodayName();
-    commerceMapRef.current?.setDayFilter(today);
-    alert(`Filtrado por los tianguis que abren hoy (${today}).`);
-  };
-
-  const runRoute = useCallback(
-    async ({ from, to, destination }) => {
-      const requestId = routeRequestRef.current + 1;
-      routeRequestRef.current = requestId;
-      setRouteLoading(true);
-      setRouteError(null);
-
-      try {
-        const plan = await fetchRoutePlan({
-          from,
-          to,
-          coordinates: userCoordinates,
-          destination: destination ?? undefined
-        });
-        if (routeRequestRef.current !== requestId) return;
-        setRoutePlan(plan);
-        openSidebar();
-      } catch (error) {
-        if (routeRequestRef.current !== requestId) return;
-        setRouteError(error.message);
-      } finally {
-        if (routeRequestRef.current === requestId) setRouteLoading(false);
-      }
-    },
-    [openSidebar, userCoordinates]
-  );
-
-  const handleSubmitRoute = () => {
-    runRoute({
-      from: routeFrom,
-      to: routeTo,
-      destination: destinationRef.current
-    });
-  };
-
-  const handleToChange = (value) => {
-    setRouteTo(value);
-    destinationRef.current = null;
-  };
-
-  const handleGoTo = (target) => {
-    if (!target) return;
-    destinationRef.current = { lat: target.lat, lon: target.lon, label: target.label };
-    setRouteTo(target.label);
-    runRoute({
-      from: routeFrom,
-      to: target.label,
-      destination: destinationRef.current
-    });
+  const handleDayChange = (day) => {
+    const nextDay = day || null;
+    selectedDayRef.current = nextDay;
+    setSelectedDay(nextDay);
+    commerceMapRef.current?.setDayFilter(nextDay);
   };
 
   const commerce = data.commerce;
+
+  const dayCounts = useMemo(() => {
+    const counts = Object.fromEntries(WEEK_DAYS.map((day) => [day.value, 0]));
+    for (const tianguis of commerce?.tianguis ?? []) {
+      for (const day of WEEK_DAYS) {
+        if (tianguisMatchesDay(tianguis, day.value)) counts[day.value] += 1;
+      }
+    }
+    return counts;
+  }, [commerce]);
+
+  const tianguisCount = selectedDay
+    ? dayCounts[selectedDay] ?? 0
+    : commerce?.tianguis.length ?? 0;
+
+  const mercomunaCount = mercomuna?.resumen.conCoordenada ?? null;
+
+  // Aviso honesto cuando el chip está activo pero la capa no puede dibujarse.
+  const mercomunaHint = mercomunaError
+    ? `No se pudieron cargar los comercios con vales: ${mercomunaError}`
+    : !mercomuna
+      ? 'Cargando comercios con vales…'
+      : mercomuna.resumen.sinUbicacion > 0
+        ? `Se dibujan ${mercomuna.resumen.conCoordenada.toLocaleString('es-MX')} comercios. ` +
+          `${mercomuna.resumen.aproximados.toLocaleString('es-MX')} se agrupan por código postal ` +
+          `y ${mercomuna.resumen.sinUbicacion} no tienen ubicación publicada.`
+        : null;
+
+  const stationIndex = useMemo(
+    () => [
+      ...(data.mobility?.metroStations ?? []).map((station) => ({
+        ...station,
+        mode: 'Metro'
+      })),
+      ...(data.mobility?.metrobusStations ?? []).map((station) => ({
+        ...station,
+        mode: 'Metrobús'
+      }))
+    ],
+    [data.mobility]
+  );
+
+  const nearbyStations = useMemo(() => {
+    if (!selected || (selected.kind !== 'tianguis' && selected.kind !== 'msr')) {
+      return [];
+    }
+    return findNearbyStations(stationIndex, selected.data.lat, selected.data.lon);
+  }, [selected, stationIndex]);
 
   return (
     <>
@@ -171,21 +210,10 @@ function AppShell() {
       </button>
 
       <Sidebar collapsed={sidebarCollapsed} onToggle={handleToggleSidebar}>
-        <RoutePlanner
-          from={routeFrom}
-          to={routeTo}
-          onFromChange={setRouteFrom}
-          onToChange={handleToChange}
-          onSubmit={handleSubmitRoute}
-          plan={routePlan}
-          loading={routeLoading}
-          error={routeError}
-        />
-
         <DetailCard
-          selection={selected}
-          onClose={() => setSelected(null)}
-          onGoTo={handleGoTo}
+          selection={selected?.kind === 'tianguis' ? null : selected}
+          nearbyStations={nearbyStations}
+          onClose={handleCloseSelection}
         />
 
         <CommerceSearch onSearch={handleSearch} />
@@ -193,11 +221,15 @@ function AppShell() {
         {commerce && (
           <CommerceControls
             counts={{
-              mercados: commerce.mercados.length,
-              tianguis: commerce.tianguis.length,
-              msr: commerce.msr.length
+              tianguis: tianguisCount,
+              msr: commerce.msr.length,
+              mercomuna: mercomunaCount
             }}
-            onFilterToday={handleFilterToday}
+            dayCounts={dayCounts}
+            totalCount={commerce.tianguis.length}
+            selectedDay={selectedDay}
+            onDayChange={handleDayChange}
+            mercomunaHint={mercomunaHint}
           />
         )}
 
@@ -228,7 +260,13 @@ function AppShell() {
           onSelect={handleSelect}
           onReady={handleCommerceReady}
         />
-        <RoutingLayers plan={routePlan} />
+        <MercomunaLayers data={mercomuna} onSelect={handleSelect} />
+
+        <TianguisPreview
+          selection={selected}
+          nearbyStations={nearbyStations}
+          onClose={handleCloseSelection}
+        />
       </main>
     </>
   );
