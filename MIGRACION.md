@@ -1,0 +1,241 @@
+# Migración `tianuisCDMX` → `mapatianguis`
+
+> Documento de trabajo. Resume la auditoría del visor legado, la arquitectura objetivo, lo que ya quedó migrado y lo que falta para que la migración sea realmente útil.
+
+---
+
+## 1. Resumen ejecutivo
+
+El visor legado era un **HTML autocontenido de 3.6 MB**: datos, CSS, fuentes, lógica y renderizado en un solo archivo. Eso impedía reutilizar los datos, probar la lógica, iterar la UI y separar responsabilidades.
+
+La migración ya tiene un **walking skeleton funcional**:
+
+- Cliente React que consume una API Node; ya no hay datos incrustados en el HTML.
+- Mapa Leaflet idéntico, con las mismas capas, popups, chips, ficha de detalle, buscador, planificador, alertas y sidebar colapsable.
+- Backend por dominios (`geo`, `commerce`, `mobility`, `routing`) con datos cacheados y endpoints versionados.
+- Contratos compartidos en `packages/contracts`.
+- Datos extraídos del HTML legado, separados por dominio y validados con checksum.
+- Tests de datos, ruteo y endpoints; build de producción verificado.
+
+Lo que **falta** para completar la intención original (JS en todo el pipeline) es la parte más costosa y menos visible: portar el ETL de Python a Node y conectar el motor real de ruteo. El runtime ya no depende de Python.
+
+---
+
+## 2. Auditoría del punto de partida
+
+| Activo | Estado legado | Problema |
+| --- | --- | --- |
+| Visor | `mapa_comercio_movilidad_cdmx.html` (3.6 MB) | Datos, CSS y lógica en un archivo; no cacheable por capas |
+| Datos | `data/processed/map_bundle.json` (3.4 MB) + CSV/GeoJSON | Duplicados entre HTML y bundle; sin API |
+| CSS | 24 KB dentro del HTML + fuentes base64 | Sin tokens ni componentes reutilizables |
+| Lógica de mapa | ~700 líneas de JS global con `onclick` | Acoplada a IDs del DOM; difícil de testear |
+| Búsqueda | Solo mercados, lineal sobre el bundle | Sin contrato ni índice |
+| Filtro “Abrir Hoy” | `includes()` sin normalizar acentos | Fallaba para `MIÉRCOLES` y `SÁBADO` |
+| Ruteo | Heurística “Metro más cercano” en el navegador | No usaba el motor real `route_calculator.py` |
+| ETL | Python: `normalize_all.py`, `generate_catalog.py`, `compile_advanced_bundle.py` | Fuera del stack JS objetivo |
+| Ruteo real | Python: NetworkX + SciPy + pickle | No portable a Node tal cual |
+| Generador de HTML | `generate_cdmx_app_style.py` | Queda obsoleto al adoptar Vite/React |
+
+### Volumen real de datos
+
+| Dominio | Archivo | Raw | Gzip |
+| --- | --- | ---: | ---: |
+| Geo | alcaldías | 665 KB | 253 KB |
+| Geo | ZMVM | 1.2 MB | 230 KB |
+| Movilidad | trazos MI | 752 KB | 203 KB |
+| Movilidad | estaciones Metro | 39 KB | 7 KB |
+| Movilidad | estaciones Metrobús | 38 KB | 8 KB |
+| Comercio | mercados | 80 KB | 13 KB |
+| Comercio | MSR | 10 KB | 3 KB |
+| Comercio | tianguis | 295 KB | 53 KB |
+| **Total** | | **3.2 MB** | **~0.76 MB** |
+
+La API responde con `compression`; la primera carga completa queda por debajo de 1 MB comprimido. No es urgente vectorizar ni teselar.
+
+---
+
+## 3. Qué significa “que funcione como cliente”
+
+Criterios que ya se cumplen:
+
+1. El navegador **no contiene los datos**: los pide a `/api/v1/*`.
+2. La API es la única fuente de verdad para datos y ruteo.
+3. El cliente puede desplegarse aparte (Vite) o servirse desde el mismo Node.
+4. Cada dominio tiene una interfaz pequeña y estable:
+   - `GET /commerce/directory`
+   - `GET /mobility/network`
+   - `GET /geo/alcaldias`
+   - `POST /routing/plan`
+5. El mapa sigue siendo Leaflet y se ve igual; React solo orquesta estado y UI.
+
+Lo que **no** significa: reescribir el mapa con otra librería o cambiar el diseño. Eso habría agregado riesgo sin beneficio para el objetivo.
+
+---
+
+## 4. Arquitectura objetivo
+
+```text
+apps/web (React + Vite)          apps/api (Node + Express)
+┌──────────────────────┐         ┌─────────────────────────┐
+│ shell                │         │ core / data store       │
+│  ├─ geo              │  HTTP   │  ├─ geo                 │
+│  ├─ commerce         │ <─────> │  ├─ commerce            │
+│  ├─ mobility         │         │  ├─ mobility            │
+│  └─ routing          │         │  └─ routing             │
+└──────────┬───────────┘         └───────────┬─────────────┘
+           │                                 │
+           └──── packages/contracts ─────────┘
+                 tipos JSDoc + constantes
+                 + utilidades puras
+```
+
+### Slices y responsabilidades
+
+| Slice | Cliente | API | Datos |
+| --- | --- | --- | --- |
+| `geo` | `GeoLayers` | `geo.routes/service` | alcaldías, ZMVM |
+| `commerce` | `CommerceLayers`, `CommerceSearch`, `CommerceControls` | `commerce.routes/service` | mercados, MSR, tianguis |
+| `mobility` | `MobilityLayers`, `MobilitySection` | `mobility.routes/service` | trazos MI, estaciones |
+| `routing` | `RoutePlanner`, `RoutingLayers` | `routing.routes/service` | landmarks + estaciones |
+| `shell` | `Sidebar`, `DetailCard`, `MapFabStack`, `QuickAccess` | — | — |
+| `shared` | HTTP, `Chip`, `Section`, selección | errores HTTP | — |
+
+Reglas:
+
+- Cada slice es dueña de su API client, sus capas y sus componentes.
+- El shell compone; no importa internals de otra slice.
+- `routing` puede depender de `commerce` y `mobility`; nunca al revés.
+- Los contratos y helpers puros viven en `packages/contracts` para que API y cliente no se desincronicen.
+
+### El seam del mapa
+
+React no renderiza los marcadores. `MapProvider` crea el mapa y mantiene un registro de capas; cada slice registra sus `FeatureGroup`/`GeoJSON` y `MapProvider` aplica visibilidad. Esto:
+
+- conserva los `divIcon`, popups y estilos exactos;
+- evita el costo de migrar a `react-leaflet`;
+- deja una interfaz pequeña: crear capa, registrarla, alternar visibilidad.
+
+---
+
+## 5. Lo que ya quedó migrado
+
+- [x] Extracción reproducible del `MAP_DATA` legado a archivos por dominio.
+- [x] CSS y fuente de iconografía de estaciones conservados.
+- [x] API Node con endpoints por dominio, caché en memoria, gzip y cache headers.
+- [x] `POST /routing/plan` con contrato de piernas (`walk` / `transit`).
+- [x] React con mapa Leaflet, capas, chips, dropdown de líneas, buscador, ficha de detalle, “Ir hacia aquí”, “Abrir Hoy”, geolocalización, FABs y sidebar colapsable.
+- [x] Contratos JSDoc compartidos y utilidades de normalización de texto/días.
+- [x] Tests de datos, ruteo y API (`npm test`).
+- [x] Validación de artefactos (`npm run verify:data`).
+- [x] Build de producción y servido desde el mismo Node.
+- [x] Verificación visual 1440×900 sin errores de consola.
+
+### Cambios intencionales respecto al legado
+
+| Cambio | Motivo |
+| --- | --- |
+| “Abrir Hoy” normaliza acentos | El legado no encontraba `MIÉRCOLES`/`SÁBADO` |
+| “Ir hacia aquí” usa las coordenadas del elemento seleccionado | El legado solo resolvía mercados y caía a Jamaica para tianguis/MSR |
+| El plan de ruta se calcula en el servidor | Crea el seam para el motor real y permite evolucionar sin tocar la UI |
+| Búsqueda de mercado prioriza coincidencia exacta | `Jamaica` ya no cae primero en `JAMAICA ZONA` por orden de arreglo |
+
+---
+
+## 6. Plan restante, en orden de valor
+
+### P0 — Cerrar decisiones de proyecto (antes de seguir)
+
+1. **Repositorio y remoto**: `mapatianguis` aún no es un repo git. Definir si se inicializa aquí y cuál será el remoto.
+2. **Paquete**: se usó npm workspaces. Confirmar npm o migrar a pnpm.
+3. **Despliegue**: elegir entre (a) un solo Node que sirve API + estáticos, o (b) front en CDN y API aparte. La app ya soporta ambas.
+4. **Política de datos**: decidir si `data/` se versiona (hoy son 3.2 MB) o se regenera en CI.
+5. **Compatibilidad**: fijar versión mínima de Node (hoy `>=20`; se probó con Node 26).
+
+**Criterio de salida**: README con URL de despliegue, rama principal y comando único de release.
+
+### P1 — Portar el ETL a JS (la parte que falta para “JS en todo el pipeline”)
+
+Orden recomendado, de menor a mayor riesgo:
+
+1. **`compile_advanced_bundle.py` → Node**
+   - Leer GTFS (`csv-parse`), shapefile de concesionados (`shapefile` npm o GeoJSON preconvertido) y GeoJSON de cartografía.
+   - Generar `data/mobility/*` y `data/geo/*`.
+   - Test de paridad: mismos conteos y checksum por archivo contra los artefactos actuales.
+2. **`generate_catalog.py` / `giro_classifier.py` → Node**
+   - Mismas reglas y catálogo de 67 giros.
+   - Fixtures de clasificación y comparación contra salida Python.
+3. **`normalize_all.py` → Node**
+   - Es el más grande: CSV, XLSX, parsing de horarios, normalización de alcaldías/colonias.
+   - Extraer primero las funciones puras (parseo de días/horarios, limpieza de nombres) y cubrirlas con fixtures.
+   - Mantener Python como “data factory” temporal hasta que la paridad esté verificada.
+4. **`route_calculator.py` → Node** (ver P2).
+5. **Eliminar `generate_cdmx_app_style.py`** y los generadores de HTML: Vite ya produce el cliente.
+
+Librerías sugeridas: `csv-parse`, `shapefile`, `read-excel-file` (o `xlsx`), `yaml` solo si hace falta. Evitar frameworks de ETL pesados.
+
+**Criterio de salida**: `npm run build:data` regenera desde `data/raw/` sin Python y `npm run verify:data` pasa con los mismos conteos.
+
+### P2 — Motor real de ruteo
+
+Hoy el planificador reproduce la heurística del legado (caminata → Metro más cercano → caminata) detrás de `POST /routing/plan`.
+
+Siguiente paso:
+
+1. Exportar el grafo de `routing_graph.pickle` a un formato JS (JSON/MessagePack) desde el ETL, o reconstruirlo en Node desde GTFS.
+2. Implementar un grafo consciente de línea con:
+   - nodos de parada y de línea;
+   - penalización de transbordo y espera;
+   - tarifas MI y caminata máxima;
+   - Dijkstra/A* con cola de prioridad.
+3. Mantener el contrato actual (`legs`, `steps`, `bounds`) para no tocar la UI.
+4. Benchmark contra `route_calculator.py` con 20–30 rutas de referencia.
+
+**Criterio de salida**: paridad de ruta/tiempo/tarifa en la suite de benchmark y respuesta < 200 ms en CDMX.
+
+### P3 — Endurecer el producto
+
+- **Tests E2E** con Playwright: carga, búsqueda, ficha, ruta, toggles, sidebar.
+- **Regresión visual** comparando capturas del legado y del cliente.
+- **Móvil**: el legado no es responsive (sidebar fijo de 420 px). Definir si se mantiene o se adapta.
+- **Accesibilidad**: `aria-label`, foco, navegación por teclado en chips/menú/FABs.
+- **Estado en URL**: `?day=`, `?mercado=`, `?ruta=`, para compartir vistas.
+- **Observabilidad**: logs de API, métricas de latencia, errores del cliente.
+- **Datos vivos**: fuente de actualización, fecha de corte visible, atribución/licencia.
+
+---
+
+## 7. Riesgos y mitigaciones
+
+| Riesgo | Impacto | Mitigación |
+| --- | --- | --- |
+| Portar el ETL cambia conteos o geometrías | Datos silenciosamente incorrectos | Checksums + tests de paridad por archivo |
+| El motor JS no reproduce el ruteo Python | Rutas distintas | Benchmark y fallback al contrato actual |
+| El visor legado se vuelve la referencia permanente | Dependencia de Python | Fecha límite de paridad y borrado del generador HTML |
+| Datos pesados en git | Repo lento | Decidir versionado vs regeneración; hoy 3.2 MB es manejable |
+| El cliente crece sin disciplina de slices | Vuelve el acoplamiento | Regla de imports y revisión de PR |
+| API sin autenticación | Abuso si se publica | Rate limit en el proxy/CDN; no hay datos privados |
+
+---
+
+## 8. Decisiones pendientes (para el equipo)
+
+1. ¿npm o pnpm?
+2. ¿Un solo servicio Node o front/CDN + API?
+3. ¿Los artefactos de `data/` se versionan o se generan?
+4. ¿Se mantiene JS puro con JSDoc o se migra a TypeScript más adelante? La migración actual es JS por requisito; los contratos están listos para TS si se decide.
+5. ¿Express se queda o se cambia a Fastify? `createApp()` ya aísla el framework.
+6. ¿Se conserva la marca “Movilidad y Comercio CDMX” o se renombra a “Mapatianguis”? Hoy se conservó el texto para no alterar la UI.
+7. ¿Qué licencia y atribución de datos se publica?
+
+---
+
+## 9. Definición de “migración terminada”
+
+- [x] El cliente no contiene datos ni lógica de servidor.
+- [x] La API sirve todos los dominios y el ruteo.
+- [x] La UI es visual y funcionalmente equivalente al legado (con las mejoras documentadas).
+- [x] Tests y build en verde.
+- [ ] El ETL corre en Node y regenera los datos desde `data/raw/`.
+- [ ] El motor real de ruteo corre en Node con paridad verificada.
+- [ ] Hay despliegue, CI y una persona puede levantar el proyecto con dos comandos.
+- [ ] El visor legado se archiva como referencia histórica y deja de ser necesario para producir datos.

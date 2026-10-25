@@ -1,0 +1,14 @@
+{
+  "name": "@mapatianguis/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Contratos y utilidades puras compartidas entre la API y el cliente.",
+  "exports": {
+    ".": "./src/index.js",
+    "./commerce": "./src/commerce.js",
+    "./geo": "./src/geo.js",
+    "./mobility": "./src/mobility.js",
+    "./routing": "./src/routing.js"
+  }
+}

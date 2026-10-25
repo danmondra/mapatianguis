@@ -1,0 +1,45 @@
+/* Ajustes de integración React. Los estilos del visor legado viven en legacy.css. */
+#root {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+#detail-card.is-visible,
+#route-result-box.is-visible {
+  display: block;
+}
+
+.map-status {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 1000;
+  background: #ffffff;
+  border: 1px solid var(--cdmx-border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-fab);
+  padding: 8px 12px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--cdmx-text-dark);
+}
+
+.map-status.is-error {
+  border-color: #fca5a5;
+  color: #991b1b;
+}
+
+.leaflet-container {
+  font-family: var(--font-main);
+}
+
+.route-result-step {
+  display: block;
+}
+
+.route-result-emissions {
+  color: #15803d;
+  font-weight: 700;
+}

@@ -1,0 +1,24 @@
+{
+  "name": "mapatianguis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mapa Tianguis CDMX — comercio popular, barrial y movilidad integrada como cliente React + API Node.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "dev:api": "npm run dev -w @mapatianguis/api",
+    "dev:web": "npm run dev -w @mapatianguis/web",
+    "build": "npm run build -w @mapatianguis/web",
+    "start": "npm run start -w @mapatianguis/api",
+    "test": "node --test apps/api/test/*.test.js",
+    "verify:data": "node scripts/verify-data.mjs",
+    "migrate:data": "node scripts/migrate-legacy-data.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

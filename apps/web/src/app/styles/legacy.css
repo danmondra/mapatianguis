@@ -1,0 +1,750 @@
+/* Generado por scripts/migrate-legacy-data.mjs — no editar a mano. */
+
+    @font-face {
+      font-family: 'estaciones';
+      src: url('/fonts/estaciones.woff') format('woff');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    em[class^="estacion-"], em[class*=" estacion-"] {
+      color: #ffffff !important;
+      font-size: 13px;
+      font-family: 'estaciones' !important;
+      font-style: normal;
+      font-weight: normal;
+      line-height: 1;
+      display: inline-block;
+      speak: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .estacion-suburbano-tultilan:before{content:"\e600"}
+    .estacion-suburbano-tlalnepantla:before{content:"\e601"}
+    .estacion-suburbano-lecheria:before{content:"\e602"}
+    .estacion-suburbano-san-rafael:before{content:"\e603"}
+    .estacion-suburbano-fortuna:before{content:"\e604"}
+    .estacion-suburbano-cuautitlan:before{content:"\e605"}
+    .estacion-suburbano-buenavista:before{content:"\e606"}
+    .estacion-universidad:before{content:"\e607"}
+    .estacion-tlatelolco:before{content:"\e608"}
+    .estacion-tezozomoc:before{content:"\e609"}
+    .estacion-terminal-aerea:before{content:"\e60a"}
+    .estacion-talisman:before{content:"\e60b"}
+    .estacion-tacubaya:before{content:"\e60c"}
+    .estacion-tacuba:before{content:"\e60d"}
+    .estacion-sevilla:before{content:"\e60e"}
+    .estacion-santa-marta:before{content:"\e60f"}
+    .estacion-santa-anita:before{content:"\e610"}
+    .estacion-san-pedro-de-los-pinos:before{content:"\e611"}
+    .estacion-san-lazaro:before{content:"\e612"}
+    .estacion-san-juan-de-letran:before{content:"\e613"}
+    .estacion-san-antonio-abad:before{content:"\e614"}
+    .estacion-salto-del-agua:before{content:"\e615"}
+    .estacion-romero-rubio:before{content:"\e616"}
+    .estacion-rio-de-los-remedios:before{content:"\e617"}
+    .estacion-ricardo-flores-magon:before{content:"\e618"}
+    .estacion-revolucion:before{content:"\e619"}
+    .estacion-refineria:before{content:"\e61a"}
+    .estacion-puebla:before{content:"\e61b"}
+    .estacion-potrero:before{content:"\e61c"}
+    .estacion-polanco:before{content:"\e61d"}
+    .estacion-plaza-de-la-transparencia:before{content:"\e61e"}
+    .estacion-etiopia:before{content:"\e61e"}
+    .estacion-plaza-aragon:before{content:"\e61f"}
+    .estacion-pino-suarez:before{content:"\e620"}
+    .estacion-penon-viejo:before{content:"\e621"}
+    .estacion-patriotismo:before{content:"\e622"}
+    .estacion-oceania:before{content:"\e623"}
+    .estacion-observatorio:before{content:"\e624"}
+    .estacion-obrera:before{content:"\e625"}
+    .estacion-norte-45:before{content:"\e626"}
+    .estacion-normal:before{content:"\e627"}
+    .estacion-ninos-heroes:before{content:"\e628"}
+    .estacion-nezahualcoyotl:before{content:"\e629"}
+    .estacion-nativitas:before{content:"\e62a"}
+    .estacion-muzquiz:before{content:"\e62b"}
+    .estacion-morelos:before{content:"\e62c"}
+    .estacion-moctezuma:before{content:"\e62d"}
+    .estacion-mixiuhca:before{content:"\e62e"}
+    .estacion-mixcoac:before{content:"\e62f"}
+    .estacion-misterios:before{content:"\e630"}
+    .estacion-miguel-angel-de-quevedo:before{content:"\e631"}
+    .estacion-merced:before{content:"\e632"}
+    .estacion-martin-carrera:before{content:"\e633"}
+    .estacion-los-reyes:before{content:"\e634"}
+    .estacion-lindavista:before{content:"\e635"}
+    .estacion-lazaro-cardenas:before{content:"\e636"}
+    .estacion-lagunilla:before{content:"\e637"}
+    .estacion-la-villa:before{content:"\e638"}
+    .estacion-la-viga:before{content:"\e639"}
+    .estacion-la-raza:before{content:"\e63a"}
+    .estacion-la-paz:before{content:"\e63b"}
+    .estacion-juarez:before{content:"\e63c"}
+    .estacion-juanacatlan:before{content:"\e63d"}
+    .estacion-jamaica:before{content:"\e63e"}
+    .estacion-iztapalapa:before{content:"\e63f"}
+    .estacion-iztacalco:before{content:"\e640"}
+    .estacion-isabel-la-catolica:before{content:"\e641"}
+    .estacion-insurgentes:before{content:"\e642"}
+    .estacion-villa-de-aragon:before{content:"\e643"}
+    .estacion-valle-gomez:before{content:"\e644"}
+    .estacion-vallejo:before{content:"\e645"}
+    .estacion-velodromo:before{content:"\e646"}
+    .estacion-xola:before{content:"\e647"}
+    .estacion-zapata:before{content:"\e648"}
+    .estacion-zaragoza:before{content:"\e649"}
+    .estacion-fray-servando:before{content:"\e64a"}
+    .estacion-ferreria:before{content:"\e64b"}
+    .estacion-eugenia:before{content:"\e64c"}
+    .estacion-escuadron-201:before{content:"\e64d"}
+    .estacion-ermita:before{content:"\e64e"}
+    .estacion-el-rosario:before{content:"\e64f"}
+    .estacion-eduardo-molina:before{content:"\e650"}
+    .estacion-ecatepec:before{content:"\e651"}
+    .estacion-doctores:before{content:"\e652"}
+    .estacion-division-del-norte:before{content:"\e653"}
+    .estacion-deportivo-oceania:before{content:"\e654"}
+    .estacion-deportivo-18-de-marzo:before{content:"\e655"}
+    .estacion-basilica:before{content:"\e655"}
+    .estacion-cuitlahuac:before{content:"\e656"}
+    .estacion-cuauhtemoc:before{content:"\e657"}
+    .estacion-cuatro-caminos:before{content:"\e658"}
+    .estacion-coyuya:before{content:"\e659"}
+    .estacion-coyoacan:before{content:"\e65a"}
+    .estacion-coplico:before{content:"\e65b"}
+    .estacion-consulado:before{content:"\e65c"}
+    .estacion-constituyentes:before{content:"\e65d"}
+    .estacion-constitucion-de-1917:before{content:"\e65e"}
+    .estacion-colegio-militar:before{content:"\e65f"}
+    .estacion-ciudad-deportiva:before{content:"\e660"}
+    .estacion-ciudad-azteca:before{content:"\e661"}
+    .estacion-chilpancingo:before{content:"\e662"}
+    .estacion-chapultepec:before{content:"\e663"}
+    .estacion-chabacano:before{content:"\e664"}
+    .estacion-cerro-de-la-estrella:before{content:"\e665"}
+    .estacion-centro-medico:before{content:"\e666"}
+    .estacion-candelaria:before{content:"\e667"}
+    .estacion-canal-del-norte:before{content:"\e668"}
+    .estacion-canal-de-san-juan:before{content:"\e669"}
+    .estacion-camarones:before{content:"\e66a"}
+    .estacion-buenavista:before{content:"\e66b"}
+    .estacion-buenavista-2:before{content:"\e66b"}
+    .estacion-boulevard-puerto-aereo:before{content:"\e66c"}
+    .estacion-bosque-de-aragon:before{content:"\e66d"}
+    .estacion-bondojito:before{content:"\e66e"}
+    .estacion-bellas-artes:before{content:"\e66f"}
+    .estacion-barranca-del-muerto:before{content:"\e670"}
+    .estacion-balderas:before{content:"\e671"}
+    .estacion-balbuena:before{content:"\e672"}
+    .estacion-atzcapotzalco:before{content:"\e673"}
+    .estacion-autobuses-del-norte:before{content:"\e674"}
+    .estacion-auditorio:before{content:"\e675"}
+    .estacion-atlalilco:before{content:"\e676"}
+    .estacion-aragon:before{content:"\e677"}
+    .estacion-aquiles-serdan:before{content:"\e678"}
+    .estacion-apatlaco:before{content:"\e679"}
+    .estacion-allende:before{content:"\e67a"}
+    .estacion-agricola-oriental:before{content:"\e67b"}
+    .estacion-aculco:before{content:"\e67c"}
+    .estacion-acatitla:before{content:"\e67d"}
+    .estacion-garibaldi:before{content:"\e67e"}
+    .estacion-general-anaya:before{content:"\e67f"}
+    .estacion-gomez-farias:before{content:"\e680"}
+    .estacion-guelatao:before{content:"\e681"}
+    .estacion-guerrero:before{content:"\e682"}
+    .estacion-hangares:before{content:"\e683"}
+    .estacion-hidalgo:before{content:"\e684"}
+    .estacion-hospital-general:before{content:"\e685"}
+    .estacion-impulsora:before{content:"\e686"}
+    .estacion-indios-verdes:before{content:"\e687"}
+    .estacion-instituto-del-petroleo:before{content:"\e688"}
+    .estacion-olimpica:before{content:"\e689"}
+    .estacion-panteones:before{content:"\e68a"}
+    .estacion-pantitlan:before{content:"\e68b"}
+    .estacion-portales:before{content:"\e68c"}
+    .estacion-popotla:before{content:"\e68d"}
+    .estacion-politecnico:before{content:"\e68e"}
+    .estacion-san-antonio:before{content:"\e68f"}
+    .estacion-san-cosme:before{content:"\e690"}
+    .estacion-san-joaquin:before{content:"\e691"}
+    .estacion-tepito:before{content:"\e692"}
+    .estacion-tasquena:before{content:"\e693"}
+    .estacion-tepalcates:before{content:"\e694"}
+    .estacion-uam:before{content:"\e695"}
+    .estacion-zocalo:before{content:"\e696"}
+    .estacion-viveros:before{content:"\e697"}
+    .estacion-derechos-humanos:before{content:"\e697"}
+    .estacion-villa-de-cortes:before{content:"\e698"}
+    .estacion-viaducto:before{content:"\e699"}
+    .estacion-hospital-20-de-noviembre:before{content:"\e69b"}
+    .estacion-insurgentes-sur:before{content:"\e69c"}
+    .estacion-lomas-estrella:before{content:"\e69d"}
+    .estacion-mexicaltzingo:before{content:"\e69e"}
+    .estacion-nopalera:before{content:"\e69f"}
+    .estacion-olivos:before{content:"\e6a0"}
+    .estacion-parque-de-los-venados:before{content:"\e6a1"}
+    .estacion-periferico-oriente:before{content:"\e6a2"}
+    .estacion-san-andres-tomatlan:before{content:"\e6a3"}
+    .estacion-tomatlan:before{content:"\e6a3"}
+    .estacion-tezonco:before{content:"\e6a4"}
+    .estacion-tlahuac:before{content:"\e6a5"}
+    .estacion-tlaltenco:before{content:"\e6a6"}
+    .estacion-culhuacan:before{content:"\e6a7"}
+    .estacion-calle-11:before{content:"\e6a8"}
+    .estacion-eje-central:before{content:"\e6a9"}
+
+    :root {
+      --cdmx-green-dark: #0f5953;
+      --cdmx-green-primary: #116962;
+      --cdmx-green-light: #eef7f6;
+      --cdmx-green-chip: #d5ece9;
+      --cdmx-bg: #f8fafc;
+      --cdmx-text-dark: #092c29;
+      --cdmx-text-muted: #527370;
+      --cdmx-border: #d4e7e5;
+      --shadow-sidebar: 4px 0 24px rgba(15, 89, 83, 0.12);
+      --shadow-fab: 0 4px 14px rgba(0, 0, 0, 0.14);
+      --font-main: 'Montserrat', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background: #eef2f6;
+      color: var(--cdmx-text-dark);
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+    }
+
+    /* Sidebar de Escritorio */
+    #sidebar {
+      width: 420px;
+      height: 100vh;
+      background: #ffffff;
+      border-right: 1px solid var(--cdmx-border);
+      box-shadow: var(--shadow-sidebar);
+      display: flex;
+      flex-direction: column;
+      z-index: 1001;
+      transition: margin-left 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    #sidebar.collapsed {
+      margin-left: -420px;
+    }
+
+    .sidebar-header {
+      background: var(--cdmx-green-dark);
+      color: #ffffff;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .sidebar-brand-title {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .sidebar-brand-sub {
+      font-size: 0.72rem;
+      color: #bbf7d0;
+      font-weight: 500;
+    }
+
+    .btn-toggle-sidebar {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .btn-toggle-sidebar:hover {
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    #btn-open-sidebar {
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      z-index: 1000;
+      display: none;
+      background: var(--cdmx-green-dark);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      box-shadow: var(--shadow-fab);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.82rem;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 18px 24px 18px;
+    }
+
+    .section-block {
+      margin-bottom: 18px;
+    }
+
+    .section-heading {
+      font-size: 0.8rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--cdmx-text-dark);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Planificador de Rutas A -> B */
+    .route-planner-card {
+      background: #f0fdf4;
+      border: 1.5px solid #22c55e;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .route-planner-title {
+      font-size: 0.86rem;
+      font-weight: 800;
+      color: #15803d;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .route-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .route-input-row {
+      position: relative;
+    }
+
+    .route-input-row input, .route-input-row select {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      padding: 7px 10px 7px 28px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-family: inherit;
+      color: #1e293b;
+    }
+
+    .route-dot-indicator {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .btn-calc-route {
+      width: 100%;
+      background: var(--cdmx-green-dark);
+      color: #ffffff;
+      border: none;
+      padding: 9px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .btn-calc-route:hover {
+      background: var(--cdmx-green-primary);
+    }
+
+    #route-result-box {
+      display: none;
+      margin-top: 10px;
+      background: #ffffff;
+      border: 1px solid #86efac;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.76rem;
+    }
+
+    /* Buscador */
+    .search-input-box {
+      position: relative;
+    }
+
+    .search-input-box input {
+      width: 100%;
+      background: #f1f5f9;
+      border: 1px solid var(--cdmx-border);
+      padding: 8px 12px 8px 32px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      color: var(--cdmx-text-dark);
+    }
+
+    .search-icon-svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      fill: var(--cdmx-text-muted);
+      width: 15px;
+      height: 15px;
+    }
+
+    /* Chips */
+    .chips-flow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip-btn {
+      background: #ffffff;
+      border: 1px solid #cbdad7;
+      color: var(--cdmx-text-dark);
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip-btn:hover {
+      border-color: var(--cdmx-green-dark);
+    }
+
+    .chip-btn.active {
+      background: var(--cdmx-green-light);
+      border-color: var(--cdmx-green-dark);
+      color: var(--cdmx-green-dark);
+    }
+
+    .btn-dropdown-main {
+      background: var(--cdmx-green-dark);
+      color: #ffffff;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+    }
+
+    #transport-dropdown-menu {
+      background: #ffffff;
+      border: 1px solid var(--cdmx-border);
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      padding: 6px;
+      display: none;
+      position: absolute;
+      z-index: 1050;
+      width: 220px;
+    }
+
+    .t-opt {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.78rem;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .t-opt:hover {
+      background: var(--cdmx-green-light);
+    }
+
+    .t-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 800;
+    }
+
+    /* Ficha de Detalle */
+    #detail-card {
+      display: none;
+      background: var(--cdmx-green-light);
+      border: 1.5px solid var(--cdmx-green-dark);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+
+    .detail-tag {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #fff;
+    }
+
+    .detail-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--cdmx-green-dark);
+      margin: 3px 0 1px 0;
+    }
+
+    .detail-loc {
+      font-size: 0.74rem;
+      color: var(--cdmx-text-muted);
+      margin-bottom: 8px;
+    }
+
+    .stats-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .stat-pill {
+      background: #ffffff;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #dbeae8;
+    }
+
+    .stat-pill-val {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--cdmx-green-dark);
+    }
+
+    .stat-pill-lbl {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--cdmx-text-muted);
+    }
+
+    .rtponky-link-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #15803d;
+      color: #ffffff;
+      text-decoration: none;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      transition: background 0.2s;
+    }
+
+    /* Accesos Rápidos */
+    .goto-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+
+    .goto-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .goto-btn-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--cdmx-green-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 4px;
+      box-shadow: 0 2px 6px rgba(15, 89, 83, 0.2);
+      transition: transform 0.2s;
+    }
+
+    .goto-btn:hover .goto-btn-circle {
+      transform: translateY(-2px);
+      background: var(--cdmx-green-primary);
+    }
+
+    .goto-btn-circle svg {
+      width: 20px;
+      height: 20px;
+      fill: #ffffff;
+    }
+
+    .goto-btn-lbl {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--cdmx-text-dark);
+      line-height: 1.1;
+    }
+
+    /* Mapa y Flotantes */
+    #map-wrapper {
+      flex: 1;
+      height: 100vh;
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-floating-actions {
+      position: absolute;
+      right: 20px;
+      bottom: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .map-fab {
+      width: 44px;
+      height: 44px;
+      background: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-fab);
+      border: 1px solid rgba(0,0,0,0.06);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .map-fab:hover {
+      transform: scale(1.06);
+    }
+
+    .map-fab svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* Marcador GPS Azul con Halo Pulsante (Estilo Google Maps / iOS) */
+    .user-gps-pulse-halo {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, 0.25);
+      border: 2px solid #2563eb;
+      animation: pulseGps 1.8s infinite ease-out;
+      position: absolute;
+      top: -4px;
+      left: -4px;
+    }
+
+    .user-gps-blue-dot {
+      width: 16px;
+      height: 16px;
+      background: #2563eb;
+      border: 3px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.6);
+      position: relative;
+    }
+
+    @keyframes pulseGps {
+      0% { transform: scale(0.8); opacity: 0.8; }
+      70% { transform: scale(2.2); opacity: 0; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
+
+    /* Badges de Estaciones */
+    .metro-station-badge {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      border: 1px solid #ffffff;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .metro-station-badge:hover {
+      transform: scale(1.4);
+      z-index: 9999 !important;
+    }
+
+    .mb-station-badge {
+      width: 20px;
+      height: 20px;
+      background: #d81b60;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 9px;
+      font-weight: 800;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+      border: 1px solid #ffffff;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+  

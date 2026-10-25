@@ -1,0 +1,19 @@
+{
+  "name": "@mapatianguis/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API Node/Express para el mapa de comercio popular y movilidad de la CDMX.",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test test/*.test.js"
+  },
+  "dependencies": {
+    "@mapatianguis/contracts": "*",
+    "compression": "^1.8.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
+}

@@ -1,0 +1,26 @@
+# Dependencias
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+apps/web/dist/
+apps/api/dist/
+
+# Entorno y logs
+.env
+.env.*
+*.log
+npm-debug.log*
+
+# SO / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Cobertura
+coverage/
+
+# Datos crudos pesados que no forman parte del runtime migrado
+data/raw/
